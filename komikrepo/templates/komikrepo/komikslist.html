@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}KomiksNatin{% endblock %}
+{% block content %}
+
+    <div class="stickyfilter">
+        <div class="row">
+            <div class="nine columns">
+                <form method="GET">
+                    <label class="filters">Action
+                     <input type="checkbox" name="Action" checked="checked">
+                     <span class="checkmark"></span>
+                    </label>
+
+                    <label class="filters">Crime
+                     <input type="checkbox" name="Crime" checked="checked">
+                     <span class="checkmark"></span>
+                    </label>
+
+                    <label class="filters">Comedy
+                     <input type="checkbox" name="Comedy" checked="checked">
+                     <span class="checkmark"></span>
+                    </label>
+
+                    <label class="filters">Drama
+                     <input type="checkbox" name="Drama" checked="checked">
+                     <span class="checkmark"></span>
+                    </label>
+
+                    <label class="filters">Horror
+                     <input type="checkbox" name="Horror" checked="checked">
+                     <span class="checkmark"></span>
+                    </label>
+
+                    <label class="filters">Mythology
+                     <input type="checkbox" name="Mythology" checked="checked">
+                     <span class="checkmark"></span>
+                    </label>
+
+                    <label class="filters">Romance
+                     <input type="checkbox" name="Romance" checked="checked">
+                     <span class="checkmark"></span>
+                    </label>
+
+                    <label class="filters">Sci Fi
+                     <input type="checkbox" name="Sci Fi" checked="checked">
+                     <span class="checkmark"></span>
+                    </label>
+
+                    <button class="invisibutton  u-pull-right" type="submit"><i class="fa fa-filter" ></i></button>
+                </form>
+            </div>
+            <div class="three columns">
+                <div class="search">
+                  <span class="fa fa-search"></span>
+                  <input class="u-full-width" placeholder="Search">
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    {% for item in komiks %}
+        {% if forloop.counter0|divisibleby:2  %}
+        <div class="row">
+        <div class="six columns">
+            <div class="listtopspace">
+                <div class="row komik">
+                    <div class="five columns">
+                        <img src="{% static "" %}images/komikrepo/{{ item.image_url }}" alt="Avatar" style="width:100%">
+                    </div>
+                    <div class="seven columns">
+                        <div class="noverflow1">
+                            <h4><b>{{ item.title }}</b></h4>
+                            <h6>{{ item.author }}</h6>
+                          <p>{{ item.description }}</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        {% else %}
+        <div class="six columns">
+            <div class="listtopspace">
+                <div class="row komik u-full-width" style="height:100%">
+                    <div class="five columns" style="height:100%">
+                        <img src="{% static "" %}images/komikrepo/{{ item.image_url }}" alt="Avatar" style="width:100%">
+                    </div>
+                    <div class="seven columns">
+                        <div class="noverflow1">
+                            <h4><b>{{ item.title }}</b></h4>
+                            <h6>{{ item.author }}</h6>
+                          <p>{{ item.description }}</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        </div>
+        {% endif %}
+    {% endfor %}
+
+{% if komiks.has_other_pages %}
+
+    <div class="container"  style="text-align:center;">
+        <div class="pagination">
+            {% if komiks.has_previous %}
+              <a href="{% url 'komikrepo:listKomiks' page=komiks.previous_page_number %}">&laquo;</a>
+            {% else %}
+              <a class="disabled">&laquo;</a>
+            {% endif %}
+            {% for i in komiks.paginator.page_range %}
+              {% if komiks.number == i %}
+                <a class="active">{{ i }} <a class="sr-only">(current)</a></a>
+              {% else %}
+                <a href="{% url 'komikrepo:listKomiks' page=i %}">{{ i }}</a>
+              {% endif %}
+            {% endfor %}
+            {% if komiks.has_next %}
+              <a href="{% url 'komikrepo:listKomiks' page=komiks.next_page_number %}">&raquo;</a>
+            {% else %}
+              <a class="disabled">&raquo;</a>
+            {% endif %}
+        </div>
+    </div>
+{% endif %}
+
+
+
+
+{% endblock %}
+
+<script type="text/javascript">
+
+
+</script>

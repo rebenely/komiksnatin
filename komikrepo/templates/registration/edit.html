@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Edit Account{% endblock %}
+{% block content %}
+{% if user.is_authenticated %}
+    <h1 align="center"><strong>Edit Account</strong></h1>
+    <div class="container">
+
+        <form method="post">
+        {% csrf_token %}
+        <div class="row">
+            <div class="four columns">
+            <h5 align="center">Username</h5>
+            </div>
+            <div class="six columns">
+                <input class="u-full-width" type="text" placeholder="{{ user.username }}" value="{{ user.username }}" readonly id="username" name="username">
+            </div>
+        </div>
+        <div class="row">
+            <div class="four columns">
+            <h5 align="center">Old Password</h5>
+            </div>
+            <div class="six columns">
+                <input class="u-full-width" type="password" placeholder="Old Password" id="oldpassword" name="oldpassword">
+            </div>
+        </div>
+        <div class="row">
+            <div class="four columns">
+            <h5 align="center">New Password</h5>
+            </div>
+            <div class="six columns">
+                <input class="u-full-width" type="password" placeholder="New Password" id="password1" name="password1">
+            </div>
+        </div>
+        <div class="row">
+            <div class="four columns">
+            <h5 align="center">Retype Password</h5>
+            </div>
+            <div class="six columns">
+                <input class="u-full-width" type="password" placeholder="Retype New Password" id="password2" name="password2">
+            </div>
+        </div>
+        <div class="row">
+            <div class="four columns">
+            <h5 align="center">Description</h5>
+            </div>
+            <div class="six columns">
+                <input class="u-full-width" type="text" placeholder="Description" id="description" name="description">
+            </div>
+        </div>
+        <div class="row" style="text-align:center;">
+            <button class="button-primary" type="submit">Edit</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="container">
+    {% if form.errors %}
+        {% for field, errors in form.errors.items %}
+            {% for error in errors %}
+                <p align="center">{{ error }}</p>
+            {% endfor %}
+        {% endfor %}
+    {% endif %}
+    </div>
+
+{% else %}
+    <h1 align="center">You must be logged in!</h1>
+{% endif %}
+{% endblock %}

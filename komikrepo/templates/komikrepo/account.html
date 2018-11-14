@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}KomiksNatin{% endblock %}
+{% block content %}
+<div id="myModal" class="modal">
+  <div class="modal-content">
+      <div class="modal-header">
+      <h5 align="center">Are you sure you want to delete your account?</h5>
+      </div>
+      <form method="post" action="{% url 'komikrepo:deleteAccount' username=user.username %}">
+
+    <div class="container">
+    <div style="text-align:center;">
+            {% csrf_token %}
+            <div class="row">
+
+                <div class="six columns">
+                    <h6>Password:</h6>
+                </div>
+                <div class="four columns">
+                    <input class="u-full-width" type="password" placeholder="Password" id="id_password" name="password">
+                </div>
+
+            </div>
+    </div>
+    </div>
+    <div class="modal-footer"  style="text-align:center;">
+            <div class="row">
+                <button class="button-primary  u-max-full-width" type="submit">Delete</button>
+                <a align="center" class="button button u-max-full-width" id="close">No</a>
+            </div>
+        </div>
+        </form>
+
+  </div>
+</div>
+
+<div class="row">
+    <div class="four columns sticky">
+        <h1 align="center"><strong>{{ account }}</strong></h1>
+        <h6 align="center">{{ description }}</h6>
+        {% if user.is_authenticated %}
+            {% if user.username == account %}
+                <div class="row">
+                    <div class="twelve columns u-max-full-width">
+                        <a class="button button-primary u-full-width" href="{% url 'komikrepo:editAccount' username=user.username %}">Edit Account</a>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="twelve columns u-max-full-width">
+                        <button id="openModal" class="u-full-width">Delete Account</button>
+                    </div>
+                </div>
+            {% endif %}
+        {% endif %}
+
+    </div>
+    <div class="eight columns">
+        <h5>Lists</h5>
+        <hr>
+
+        <div class="topspace">
+            <div class="card">
+                <div class="row">
+                    <a href="#">
+                    <div class="cardtitle slide_down">
+                        <div class="container">
+                            <h4 class="cardname"><em>Top 10: </em><strong> {{ hello }}</strong></h4>
+                        </div>
+                    </div>
+                    </a>
+                    <div class="u-max-full-width noverflow">
+
+                        <p class="cardname">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.</p>
+                    </div>
+                </div>
+           </div>
+        </div>
+
+
+        <div class="topspace">
+            <div class="card">
+                <div class="row">
+                    <a href="#">
+                    <div class="cardtitle slide_down">
+                        <div class="container">
+                            <h4 class="cardname"><em>Top 10: </em><strong> {{ hello }}</strong></h4>
+                        </div>
+                    </div>
+                    </a>
+                    <div class="u-max-full-width noverflow">
+
+                        <p class="cardname">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.</p>
+                    </div>
+                </div>
+           </div>
+        </div>
+
+
+        <div class="topspace">
+            <div class="card">
+                <div class="row">
+                    <a href="#">
+                    <div class="cardtitle slide_down">
+                        <div class="container">
+                            <h4 class="cardname"><em>Top 10: </em><strong> {{ hello }}</strong></h4>
+                        </div>
+                    </div>
+                    </a>
+                    <div class="u-max-full-width noverflow">
+
+                        <p class="cardname">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.</p>
+                    </div>
+                </div>
+           </div>
+        </div>
+        <h5>Reviews</h5>
+        <hr>
+
+        <div class="topspace">
+            <div class="card">
+                <div class="row">
+                    <a href="#">
+                    <div class="cardtitle slide_down">
+                        <div class="container">
+                            <h4 class="cardname"><em>Top 10: </em><strong> {{ hello }}</strong></h4>
+                        </div>
+                    </div>
+                    </a>
+                    <div class="u-max-full-width noverflow">
+
+                        <p class="cardname">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.</p>
+                    </div>
+                </div>
+           </div>
+        </div>
+
+        <div class="topspace">
+            <div class="card">
+                <div class="row">
+                    <a href="#">
+                    <div class="cardtitle slide_down">
+                        <div class="container">
+                            <h4 class="cardname"><em>Top 10: </em><strong> {{ hello }}</strong></h4>
+                        </div>
+                    </div>
+                    </a>
+                    <div class="u-max-full-width noverflow">
+
+                        <p class="cardname">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.</p>
+                    </div>
+                </div>
+           </div>
+        </div>
+
+    </div>
+</div>
+
+<script type="text/javascript">
+    // Get the modal
+
+
+</script>
+
+{% endblock %}
+{% block jscript %}
+<script type="text/javascript">
+var modal = document.getElementById('myModal');
+console.log('puta')
+// Get the button that opens the modal
+var btn = document.getElementById("openModal");
+
+// Get the <span> element that closes the modal
+var span = document.getElementById("close");
+
+// When the user clicks on the button, open the modal
+btn.onclick = function() {
+    console.log('yow');
+    modal.style.display = "block";
+}
+
+// When the user clicks on <span> (x), close the modal
+span.onclick = function() {
+    modal.style.display = "none";
+}
+
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function(event) {
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}
+</script>
+{% endblock %}
