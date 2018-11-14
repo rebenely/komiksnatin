@@ -68,10 +68,18 @@ def editAccount(request, username):
 
 def listKomiks(request, page=1):
     if request.method == 'GET':
-        komik_list = Komik.objects.all()
-
-        
-        print(komik_list[0].id)
+        if request.GET:
+            print(request.GET)
+            if(request.GET.get('search')):
+                komik_list = Komik.objects.filter(title__icontains=request.GET.get('search'))
+            else:
+                komik_list = Komik.objects.all()
+            for entry in request.GET:
+                if entry != 'search':
+                    komik_list = komik_list.filter(komik_tags=Tag.objects.filter(name=entry)[0])
+                    print(komik_list)
+        else:
+            komik_list = Komik.objects.all()
 
         paginator = Paginator(komik_list, 10)
         print('page no is', page)
@@ -84,4 +92,4 @@ def listKomiks(request, page=1):
         context = {'hello': 'post'}
     else:
         komiks = Komik.objects.all()
-    return render(request, 'komikrepo/komikslist.html', {'komiks': komiks})
+    return render(request, 'komikrepo/komikslist.html', {'komiks': komiks, 'querySet': request.GET.urlencode()})

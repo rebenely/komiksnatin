@@ -27,19 +27,7 @@ class Account(models.Model):
             Account.objects.create(user=instance, username=instance.username)
         instance.account.save()
 
-class Komik(models.Model):
-    title = models.CharField(max_length=100)
-    description = models.CharField(max_length=500, blank=True, null=True)
-    rating = models.DecimalField(max_digits=3, decimal_places=2, blank=True, null=True)
-    image_url = models.CharField(max_length=500, blank=True, null=True)
-    author = models.CharField(max_length=100, null=True, blank=True)
 
-    def __str__(self):
-        return self.title
-
-    class Meta:
-
-        db_table = 'komik'
 
 
 class List(models.Model):
@@ -53,28 +41,9 @@ class List(models.Model):
         db_table = 'list'
 
 
-class ListRank(models.Model):
-    list = models.ForeignKey(List, models.DO_NOTHING)
-    komik = models.ForeignKey(Komik, models.DO_NOTHING)
-    ranking = models.IntegerField()
-    description = models.CharField(max_length=500, blank=True, null=True)
-
-    class Meta:
-
-        db_table = 'listrank'
-        unique_together = (('list', 'ranking'),)
 
 
-class Review(models.Model):
-    user = models.ForeignKey(Account, models.DO_NOTHING)
-    komik = models.ForeignKey(Komik, models.DO_NOTHING)
-    rating = models.IntegerField(blank=True, null=True)
-    comment = models.CharField(max_length=500, blank=True, null=True)
 
-    class Meta:
-
-        db_table = 'review'
-        unique_together = (('komik', 'user'),)
 
 
 class Tag(models.Model):
@@ -85,6 +54,21 @@ class Tag(models.Model):
         db_table = 'tag'
     def __str__(self):
         return self.name
+
+class Komik(models.Model):
+    title = models.CharField(max_length=100)
+    description = models.CharField(max_length=500, blank=True, null=True)
+    rating = models.DecimalField(max_digits=3, decimal_places=2, blank=True, null=True)
+    image_url = models.CharField(max_length=500, blank=True, null=True)
+    author = models.CharField(max_length=100, null=True, blank=True)
+    komik_tags = models.ManyToManyField(Tag, through='Tags')
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+
+        db_table = 'komik'
 
 class Tags(models.Model):
     tag = models.ForeignKey(Tag, models.DO_NOTHING)
@@ -98,3 +82,25 @@ class Tags(models.Model):
 
         db_table = 'tags'
         unique_together = (('tag', 'komik'),)
+
+class ListRank(models.Model):
+    list = models.ForeignKey(List, models.DO_NOTHING)
+    komik = models.ForeignKey(Komik, models.DO_NOTHING)
+    ranking = models.IntegerField()
+    description = models.CharField(max_length=500, blank=True, null=True)
+
+    class Meta:
+
+        db_table = 'listrank'
+        unique_together = (('list', 'ranking'),)
+
+class Review(models.Model):
+    user = models.ForeignKey(Account, models.DO_NOTHING)
+    komik = models.ForeignKey(Komik, models.DO_NOTHING)
+    rating = models.IntegerField(blank=True, null=True)
+    comment = models.CharField(max_length=500, blank=True, null=True)
+
+    class Meta:
+
+        db_table = 'review'
+        unique_together = (('komik', 'user'),)

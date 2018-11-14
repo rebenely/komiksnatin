@@ -5,60 +5,63 @@
 
     <div class="stickyfilter">
         <div class="row">
+            <form method="GET" action="{% url 'komikrepo:listKomiks' %}" class="nospace">
+
             <div class="nine columns">
-                <form method="GET">
                     <label class="filters">Action
-                     <input type="checkbox" name="Action" checked="checked">
+                     <input type="checkbox" name="Action" id="Action">
                      <span class="checkmark"></span>
                     </label>
 
                     <label class="filters">Crime
-                     <input type="checkbox" name="Crime" checked="checked">
+                     <input type="checkbox" name="Crime" id="Crime">
                      <span class="checkmark"></span>
                     </label>
 
                     <label class="filters">Comedy
-                     <input type="checkbox" name="Comedy" checked="checked">
+                     <input type="checkbox" name="Comedy" id="Comedy">
                      <span class="checkmark"></span>
                     </label>
 
                     <label class="filters">Drama
-                     <input type="checkbox" name="Drama" checked="checked">
+                     <input type="checkbox" name="Drama" id="Drama">
                      <span class="checkmark"></span>
                     </label>
 
                     <label class="filters">Horror
-                     <input type="checkbox" name="Horror" checked="checked">
+                     <input type="checkbox" name="Horror" id="Horror">
                      <span class="checkmark"></span>
                     </label>
 
                     <label class="filters">Mythology
-                     <input type="checkbox" name="Mythology" checked="checked">
+                     <input type="checkbox" name="Mythology" id="Mythology">
                      <span class="checkmark"></span>
                     </label>
 
                     <label class="filters">Romance
-                     <input type="checkbox" name="Romance" checked="checked">
+                     <input type="checkbox" name="Romance" id="Romance">
                      <span class="checkmark"></span>
                     </label>
 
                     <label class="filters">Sci Fi
-                     <input type="checkbox" name="Sci Fi" checked="checked">
+                     <input type="checkbox" name="SciFi" id="SciFi">
                      <span class="checkmark"></span>
                     </label>
 
                     <button class="invisibutton  u-pull-right" type="submit"><i class="fa fa-filter" ></i></button>
-                </form>
             </div>
+
+
             <div class="three columns">
+
                 <div class="search">
                   <span class="fa fa-search"></span>
-                  <input class="u-full-width" placeholder="Search">
+                  <input class="u-full-width" placeholder="Keep empty for all" id="search" name="search">
                 </div>
+
             </div>
-
+            </form>
         </div>
-
     </div>
 
     {% for item in komiks %}
@@ -75,12 +78,20 @@
                             <h4><b>{{ item.title }}</b></h4>
                             <h6>{{ item.author }}</h6>
                           <p>{{ item.description }}</p>
+                          <h6>
+                          {% for tag in item.komik_tags.all %}
+                              {{ tag.name }}
+                          {% endfor %}
+                          </h6>
                         </div>
                     </div>
 
                 </div>
             </div>
         </div>
+        {% if forloop.last %}
+            </div>
+        {% endif %}
 
         {% else %}
         <div class="six columns">
@@ -93,7 +104,12 @@
                         <div class="noverflow1">
                             <h4><b>{{ item.title }}</b></h4>
                             <h6>{{ item.author }}</h6>
-                          <p>{{ item.description }}</p>
+                            <p>{{ item.description }}</p>
+                            <h6>
+                            {% for tag in item.komik_tags.all %}
+                                {{ tag.name }}
+                            {% endfor %}
+                            </h6>
                         </div>
                     </div>
 
@@ -109,7 +125,7 @@
     <div class="container"  style="text-align:center;">
         <div class="pagination">
             {% if komiks.has_previous %}
-              <a href="{% url 'komikrepo:listKomiks' page=komiks.previous_page_number %}">&laquo;</a>
+              <a href="{% url 'komikrepo:listKomiks' page=komiks.previous_page_number %}?{{ request.GET.urlencode }}">&laquo;</a>
             {% else %}
               <a class="disabled">&laquo;</a>
             {% endif %}
@@ -117,11 +133,11 @@
               {% if komiks.number == i %}
                 <a class="active">{{ i }} <a class="sr-only">(current)</a></a>
               {% else %}
-                <a href="{% url 'komikrepo:listKomiks' page=i %}">{{ i }}</a>
+                <a href="{% url 'komikrepo:listKomiks' page=i %}?{{ request.GET.urlencode }}">{{ i }}</a>
               {% endif %}
             {% endfor %}
             {% if komiks.has_next %}
-              <a href="{% url 'komikrepo:listKomiks' page=komiks.next_page_number %}">&raquo;</a>
+              <a href="{% url 'komikrepo:listKomiks' page=komiks.next_page_number %}?{{ request.GET.urlencode }}">&raquo;</a>
             {% else %}
               <a class="disabled">&raquo;</a>
             {% endif %}
@@ -133,8 +149,23 @@
 
 
 {% endblock %}
-
+{% block jscript %}
 <script type="text/javascript">
 
+    var link = document.location.href.split('&');
+    if(link[0]){
+        link[0] = link[0].split('?')[1];
+    }
+    for(let i = 0; i < link.length; i++){
+        link[i] = link[i].replace("=on", "")
+        if (document.getElementById(link[i]) != null) {
+            document.getElementById(link[i]).checked = true;
+        } else {
+            link[i] = link[i].replace("search=", "");
+            document.getElementById("search").value = link[i];
+        }
+    }
+    console.log('yah boy', link);
 
 </script>
+{% endblock %}

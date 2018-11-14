@@ -574,6 +574,7 @@ there.
     border-bottom: 1px solid #E1E1E1;
     padding-top:10px;
     padding-bottom: 10px;
+
 }
 
 .modal {
@@ -758,3 +759,6 @@ img{
     padding: 0;
     background: none;
 }
+
+.nospace {
+  margin-bottom: 0px; }
