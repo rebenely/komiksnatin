@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Review{% endblock %}
+{% block content %}
+{% if user.is_authenticated %}
+<h1 align="center"><strong>Review</strong></h1>
+<div class="container">
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="row">
+            <div class="four columns">
+            <h5 align="center">Rating: </h5>
+            </div>
+
+            <div class="five columns">
+                <div id="slider" style="margin-top:15px;"></div>
+            </div>
+            <div class="one columns">
+                <p>
+                  <input type="text" readonly id="rate" name="rate" style="border:0; color:#f6931f; font-weight:bold;">
+                  <input type="hidden" id="rating" name="rating">
+                </p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="four columns">
+            <h5 align="center">Comment</h5>
+            </div>
+            <div class="six columns">
+                <textarea class="u-full-width" placeholder="Add Comment" id="comment" name="comment" style="height: 100px"></textarea>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+
+            <div class="container" style="text-align:center;">
+                <button class="button-primary" type="submit">{% if review %}Edit Review{% else %}Add Review{% endif %}</button>
+            </div>
+        </div>
+        </form>
+    </div>
+
+{% else %}
+    <h1 align="center">You must be signed in to add reviews!</h1>
+
+{% endif %}
+{% endblock %}
+
+{% block jscript %}
+<script>
+$( function() {
+  $( "#slider" ).slider({
+    value:"{{ review.rating }}",
+    min: 0,
+    max: 5,
+    step: 1,
+    slide: function( event, ui ) {
+      $( "#rate" ).val( ui.value + "☆");
+      $( "#rating" ).val(ui.value);
+    }
+  });
+
+  $( "#rate" ).val( $( "#slider" ).slider( "value" ) + "☆" );
+  $( "#rating" ).val( $( "#slider" ).slider( "value" )  );
+
+var parser = new DOMParser;
+var dom = parser.parseFromString(
+    '<!doctype html><body>' + `{{ review.comment }}`,
+    'text/html');
+var decodedString = dom.body.textContent;
+  $( "#comment" ).val( decodedString );
+} );
+</script>
+{% endblock %}

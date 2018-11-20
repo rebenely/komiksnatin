@@ -5,6 +5,9 @@ from komikrepo.models import *
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.http import Http404
+from django.core.exceptions import PermissionDenied
+
 
 def index(request):
     context = {'hello': 'Test'}
@@ -64,6 +67,8 @@ def editAccount(request, username):
                 return redirect('/account/'+username)
     else:
         form = EditForm()
+        if request.user.username != username:
+            raise PermissionDenied
     return render(request, 'registration/edit.html', {'form': form})
 
 def listKomiks(request, page=1):
@@ -93,3 +98,81 @@ def listKomiks(request, page=1):
     else:
         komiks = Komik.objects.all()
     return render(request, 'komikrepo/komikslist.html', {'komiks': komiks, 'querySet': request.GET.urlencode()})
+
+def viewKomik(request, id):
+    try:
+        komik = Komik.objects.get(id=id)
+        reviews = Review.objects.filter(komik=komik)
+        user = Account.objects.get(username=request.user.username)
+        try:
+            reviews.get(user=user)
+            canAdd = False
+        except Review.DoesNotExist:
+            canAdd = True
+        print(komik)
+    except Komik.DoesNotExist:
+        raise Http404("Komik does not exist")
+    return render(request, 'komikrepo/komikview.html', {'komik': komik, 'reviews': reviews, 'canAdd': canAdd })
+
+def reviewKomik(request, id):
+    if request.method == 'POST':
+        form = ReviewForm(request.POST)
+        if form.is_valid() and request.user.is_authenticated:
+            print('found one ' + str(form.cleaned_data.get('rating')))
+            try:
+                komik = Komik.objects.get(id=id)
+                user = Account.objects.get(username=request.user.username)
+                rating = form.cleaned_data.get('rating')
+                comment = form.cleaned_data.get('comment')
+                r = Review(user=user, komik=komik, rating=rating, comment=comment)
+                r.save()
+                print(komik)
+            except Komik.DoesNotExist:
+                raise Http404("Komik does not exist")
+    else:
+        form = ReviewForm()
+        return render(request, 'komikrepo/reviewkomik.html', {'form': form})
+    return redirect('/komik/'+str(id))
+
+def editReviewKomik(request, id):
+    if request.method == 'POST':
+        form = ReviewForm(request.POST)
+        if form.is_valid() and request.user.is_authenticated:
+            print('found one ' + str(form.cleaned_data.get('rating')))
+            try:
+                komik = Komik.objects.get(id=id)
+                user = Account.objects.get(username=request.user.username)
+                old_review = Review.objects.get(komik=komik, user=user)
+
+                rating = form.cleaned_data.get('rating')
+                comment = form.cleaned_data.get('comment')
+                old_review.rating = rating;
+                old_review.comment = comment;
+                old_review.save()
+            except Komik.DoesNotExist or Account.DoesNotExist or Review.DoesNotExist:
+                raise Http404("Error retreiving from DB")
+    else:
+        form = ReviewForm()
+        try:
+            komik = Komik.objects.get(id=id)
+            user = Account.objects.get(username=request.user.username)
+            review = Review.objects.get(komik=komik, user=user)
+        except Komik.DoesNotExist or Account.DoesNotExist or Review.DoesNotExist:
+            raise Http404("Error retreiving from DB")
+
+        return render(request, 'komikrepo/reviewkomik.html', {'form': form, 'review': review})
+    return redirect('/komik/'+str(id))
+
+def deleteReviewKomik(request, id):
+    if request.method == 'POST':
+        if request.user.is_authenticated:
+            try:
+                komik = Komik.objects.get(id=id)
+                user = Account.objects.get(username=request.user.username)
+                old_review = Review.objects.get(komik=komik, user=user)
+                old_review.delete()
+            except Komik.DoesNotExist or Account.DoesNotExist or Review.DoesNotExist:
+                raise Http404("Error retreiving from DB")
+    else:
+        return redirect('/komik/'+str(id))
+    return redirect('/komik/'+str(id))

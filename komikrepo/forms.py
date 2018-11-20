@@ -10,6 +10,25 @@ class SignUpForm(UserCreationForm):
         model = User
         fields = ('username', 'description', 'password1', 'password2', )
 
+    def clean(self):
+        cleaned_data = super().clean()
+        username = cleaned_data.get("username")
+        new_password1 = cleaned_data.get("password1")
+        new_password2 = cleaned_data.get("password2")
+
+        if username and len(username) > 20:
+            raise forms.ValidationError(
+                "Username must be less than 20 chars!"
+            )
+        if username and len(username) < 5:
+            raise forms.ValidationError(
+                "Username must be greater than 5 chars!"
+            )
+        if new_password2 and new_password1 and len(new_password2) > 20 and len(new_password1) > 20:
+            raise forms.ValidationError(
+                "Password must be less than 20 chars!"
+            )
+
 class EditForm(forms.Form):
     description = forms.CharField(required=False);
     username = forms.CharField(help_text='Say something about yourself!');
@@ -44,3 +63,19 @@ class EditForm(forms.Form):
             raise forms.ValidationError(
                 "New password does not match!"
             )
+
+class ReviewForm(forms.Form):
+    comment = forms.CharField(required=False, max_length=500);
+    rating = forms.IntegerField()
+
+    class Meta:
+        fields = ('comment', 'rating' )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        rating = cleaned_data.get("rating")
+        comment = cleaned_data.get("comment")
+
+        print(comment)
+        if rating < 0 or rating > 5:
+            raise forms.ValidationError("Must be in the range 1-5!")

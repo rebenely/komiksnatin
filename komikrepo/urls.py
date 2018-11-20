@@ -20,6 +20,11 @@ urlpatterns = [
 
     url(r'^komiks/$',  komik_views.listKomiks, name='listKomiks'),
     path('komiks/<int:page>/', komik_views.listKomiks, name='listKomiks'),
+    path('komik/<int:id>/', komik_views.viewKomik, name='viewKomik'),
+
+    path('review/<int:id>/', komik_views.reviewKomik, name='reviewKomik'),
+    path('review/edit/<int:id>/', komik_views.editReviewKomik, name='editReviewKomik'),
+    path('review/elete/<int:id>/', komik_views.deleteReviewKomik, name='deleteReviewKomik'),
 
 
 ]
