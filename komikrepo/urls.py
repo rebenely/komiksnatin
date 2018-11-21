@@ -24,7 +24,8 @@ urlpatterns = [
 
     path('review/<int:id>/', komik_views.reviewKomik, name='reviewKomik'),
     path('review/edit/<int:id>/', komik_views.editReviewKomik, name='editReviewKomik'),
-    path('review/elete/<int:id>/', komik_views.deleteReviewKomik, name='deleteReviewKomik'),
+    path('review/delete/<int:id>/', komik_views.deleteReviewKomik, name='deleteReviewKomik'),
+
 
 
 ]

@@ -6,6 +6,7 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import Http404
+from django.db import connection
 from django.core.exceptions import PermissionDenied
 
 
@@ -22,6 +23,8 @@ def signup(request):
             user.account.description = form.cleaned_data.get('description')
             user.account.account_type = 'basic';
             user.save()
+            print (connection.queries)
+
             raw_password = form.cleaned_data.get('password1')
             user = authenticate(username=user.username, password=raw_password)
             login(request, user)
@@ -80,9 +83,22 @@ def listKomiks(request, page=1):
             else:
                 komik_list = Komik.objects.all()
             for entry in request.GET:
-                if entry != 'search':
+                print(entry)
+                if entry != 'search' and entry != 'sort':
                     komik_list = komik_list.filter(komik_tags=Tag.objects.filter(name=entry)[0])
                     print(komik_list)
+                if entry == 'sort':
+                    order = request.GET.get('sort', '')
+                    if order == 'abc':
+                        komik_list = komik_list.order_by('title')
+                    elif order == 'cba':
+                        komik_list = komik_list.order_by('-title')
+                    elif order == 'rating':
+                        komik_list = komik_list.order_by('rating')
+                    elif order == 'gnitar':
+                        komik_list = komik_list.order_by('-rating')
+
+
         else:
             komik_list = Komik.objects.all()
 
@@ -112,6 +128,8 @@ def viewKomik(request, id):
         print(komik)
     except Komik.DoesNotExist:
         raise Http404("Komik does not exist")
+    except Account.DoesNotExist:
+        canAdd = False
     return render(request, 'komikrepo/komikview.html', {'komik': komik, 'reviews': reviews, 'canAdd': canAdd })
 
 def reviewKomik(request, id):

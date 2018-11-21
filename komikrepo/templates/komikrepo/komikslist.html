@@ -2,12 +2,13 @@
 {% load static %}
 {% block title %}KomiksNatin{% endblock %}
 {% block content %}
+{% load komikrepo_extras %}
 
     <div class="stickyfilter">
         <div class="row">
             <form method="GET" action="{% url 'komikrepo:listKomiks' %}" class="nospace">
 
-            <div class="nine columns">
+            <div class="eight columns">
                     <label class="filters">Action
                      <input type="checkbox" name="Action" id="Action">
                      <span class="checkmark"></span>
@@ -48,9 +49,20 @@
                      <span class="checkmark"></span>
                     </label>
 
-                    <button class="invisibutton  u-pull-right" type="submit"><i class="fa fa-filter" ></i></button>
             </div>
 
+            <div class="one column">
+                <div class="dropdown">
+                  <button class="dropbtn invisibutton"><i class="fa fa-sort" ></i></button>
+                  <div class="dropdown-content">
+                    <a href="?{% url_replace request 'sort' 'abc' %}">abc ↓</a>
+                    <a href="?{% url_replace request 'sort' 'cba' %}">abc ↑</a>
+                    <a href="?{% url_replace request 'sort' 'rating' %}">rating ↓</a>
+                    <a href="?{% url_replace request 'sort' 'gnitar' %}">rating ↑</a>
+                  </div>
+                </div>
+                <button class="invisibutton" type="submit"><i class="fa fa-filter" ></i></button>
+            </div>
 
             <div class="three columns">
 
@@ -158,6 +170,7 @@
 <script type="text/javascript">
 
     var link = document.location.href.split('&');
+
     if(link[0]){
         link[0] = link[0].split('?')[1];
     }
@@ -166,8 +179,12 @@
         if (document.getElementById(link[i]) != null) {
             document.getElementById(link[i]).checked = true;
         } else {
-            link[i] = link[i].replace("search=", "");
-            document.getElementById("search").value = link[i];
+            if (link[i].includes("search")) {
+                link[i] = link[i].replace("search=", "");
+                document.getElementById("search").value = link[i];
+            } else if (link[i].includes("sort")) {
+
+            }
         }
     }
     console.log('yah boy', link);
