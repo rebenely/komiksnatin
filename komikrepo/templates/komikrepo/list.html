@@ -1,0 +1,263 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}KomiksNatin{% endblock %}
+{% block content %}
+{% csrf_token %}
+
+<div class="row">
+    {% if user.is_authenticated %}
+    <h1 align="center"><strong>{{ title }}</strong></h1>
+    <div class="eight columns" >
+
+        <div id="sortable" class="max-full-width">
+            <h1 align="center">Empty</h1>
+      </div>
+
+    </div>
+
+
+    <div class="three columns sticky">
+        <div class="ui-widget">
+          <label for="komiksearch">Add Komik: </label>
+          <input class="u-full-width" type="text" placeholder="search komik" id="komiksearch">
+        </div>
+        <div id="loader">
+            <div class="row">
+                <div class="eight columns" style="margin-top: 10px; padding-left: 20px; ">
+                    Processing Request
+                </div>
+            <div class="lds-ring" style=""><div></div><div></div><div></div><div></div></div>
+            </div>
+        <div>
+        <div id="dialog" title="Error">
+            <p id="dialogMessage">Test</p>
+        </div>
+    </div>
+    {% else %}
+    <h1 align="center">Login First!</h1>
+    {% endif %}
+</div>
+
+
+{% endblock %}
+
+
+{% block jscript %}
+<script>
+    store = []
+    var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
+$( function() {
+  $( "#sortable" ).sortable({
+    placeholder: "ui-state-highlight",
+    stop: function (event, ui) {
+        updateRanks();
+    },
+    sort: function(event, ui) {
+        var $target = $(event.target);
+        if (!/html|body/i.test($target.offsetParent()[0].tagName)) {
+            var top = event.pageY - $target.offsetParent().offset().top - (ui.helper.outerHeight(true) / 2);
+            ui.helper.css({'top' : top + 'px'});
+        }
+    },
+  });
+  $( "#sortable" ).disableSelection();
+  $(document).on("click", ".closeButton", function(event){
+      console.log("yippie", event.currentTarget.id);
+      var divId = getNumber(event.currentTarget.id);
+      console.log("#komik"+divId);
+      $("#loader").show();
+      $.ajax( {
+        url: "/ajax/list/delete/",
+        dataType: "json",
+        type: "POST",
+        data: {
+          id: "{{ id }}",
+          komik_id: divId,
+        },
+        success: function( data ) {
+            $( "#komik"+divId ).remove();
+            var removed = -1;
+            for( var i = 0; i < store.length; i++ ){
+                console.log('store[i]', store[i].value == divId)
+                if(store[i].value == divId) {
+                    store.splice(i, 1);
+                    removed = i;
+                }
+            }
+            updateRanks();
+            console.log(store);
+            if(store.length == 0) {
+                $( "#sortable" ).empty();
+                $( "#sortable" ).append("<h1 align='center'>Empty</h1>");
+            }
+            $("#loader").hide();
+        }
+      } );
+
+
+  });
+
+} );
+
+$( function() {
+  function log( message ) {
+    $( "<div>" ).text( message ).prependTo( "#log" );
+    $( "#log" ).scrollTop( 0 );
+  }
+
+  $( "#komiksearch" ).autocomplete({
+    source: function( request, response ) {
+        $("#loader").show();
+      $.ajax( {
+        url: "/ajax/komik/",
+        dataType: "json",
+        data: {
+          term: request.term
+        },
+        success: function( data ) {
+          response( data );
+          $("#loader").hide();
+        }
+      } );
+    },
+    minLength: 2,
+    select: function( event, ui ) {
+      console.log(ui.item);
+
+      console.log(store);
+      $(this).val('');
+      event.preventDefault();
+      $("#loader").show();
+      $.ajax( {
+        url: "/ajax/list/add/",
+        type: "POST",
+        dataType: "json",
+        data: {
+          id: "{{ id }}",
+          komik_id: ui.item.value,
+          ranking: store.length + 1
+        },
+        success: function( data ) {
+          console.log('eto resulta', data)
+          if(store.length == 0){
+              $( "#sortable" ).empty();
+          }
+          data.desc = '';
+          store.push(data);
+          appendKomik(data.label, data.img, data.value, data.desc);
+          $([document.documentElement, document.body]).animate({
+                scrollTop: $(document).height()
+           }, 500);
+           $("#loader").hide();
+       },
+       statusCode: {
+       500: function() {
+          $( "#dialog" ).dialog( "open" );
+          $( "#dialogMessage" ).text("Error adding. Komik already in list!")
+          $("#loader").hide();
+       }
+     }
+      } );
+  },
+  } );
+} );
+$(document).ready(function(){
+    $( "#dialog" ).dialog({
+        autoOpen: false,
+    });
+    $("#loader").show();
+    $.ajax( {
+      url: "/ajax/list/",
+      dataType: "json",
+      data: {
+        id: "{{ id }}"
+      },
+      success: function( data ) {
+        store = data;
+        if(data.length != 0){
+            $( "#sortable" ).empty();
+        }
+        for ( var i = 0; i < store.length; i++ ){
+            console.log(store[i])
+            appendKomik(store[i].label, store[i].img, store[i].value, store[i].desc);
+
+        }
+        $("#loader").hide();
+      }
+    } );
+});
+
+function appendKomik(title, img, id, desc){
+    var $newdiv = $("<div class='ui-state-default row' id='komik" + id + "'><div class='three columns'><img src='{% static '' %}images/komikrepo/" + img + "' alt='Avatar' style='width:100%''></div><div class='eight columns'><h4><b>" + title + "</b></h4><textarea class='u-full-width' placeholder='Comment' id='comment" + id +"' style='height: 85px; width: 100%; resize: none;'>" + desc + "</textarea></div><div class='one columns'><p id='delete" + id + "' class='closeButton'>×</p></div></div>");
+    $( "#sortable" ).append($newdiv);
+
+}
+
+
+var timer = null;
+ $(document).on("keydown", "textarea", function(event){
+
+       clearTimeout(timer);
+       timer = setTimeout(doStuff, 1000, event)
+});
+
+function doStuff(event) {
+    console.log('do stuff', event.currentTarget.id, 'value ', event.currentTarget.value);
+    var komik_id = getNumber(event.currentTarget.id)
+    $.ajax( {
+      url: "/ajax/list/desc/",
+      type: "POST",
+      dataType: "json",
+      data: {
+        id: "{{ id }}",
+        komik_id: komik_id,
+        description: event.currentTarget.value
+      },
+      success: function( data ) {
+
+      }
+    } );
+
+}
+
+function getNumber(str){
+    return str.replace( /^\D+/g, '');
+}
+function csrfSafeMethod(method) {
+    // these HTTP methods do not require CSRF protection
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+function updateRanks(){
+    var sortedIDs = $( "#sortable" ).sortable( "toArray" );
+    for( var i = 0; i < sortedIDs.length; i++ ){
+        sortedIDs[i] = getNumber(sortedIDs[i]);
+    }
+    console.log(sortedIDs);
+    console.log(store);
+
+    $("#loader").show();
+    $.ajax( {
+        url: "/ajax/list/sort/",
+        dataType: "json",
+        type: "POST",
+        data: {
+          id: "{{ id }}",
+          komik_sort : JSON.stringify(sortedIDs)
+        },
+        success: function( data ) {
+            console.log('sort successfull')
+            $("#loader").hide();
+        }
+    } );
+}
+$.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+        }
+    }
+});
+
+
+</script>
+{% endblock %}

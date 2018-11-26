@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Lists{% endblock %}
+{% block content %}
+{% load komikrepo_extras %}
+<div class="stickyfilter">
+    <div class="row container">
+        <form method="GET" action="{% url 'komikrepo:listList' %}" class="nospace">
+
+        <div class="twelve columns">
+
+            <div class="search">
+              <span class="fa fa-search"></span>
+              <input class="u-full-width" placeholder="Keep empty for all" id="search" name="search">
+            </div>
+
+        </div>
+
+        </form>
+    </div>
+</div>
+
+    <div class="flex-container">
+    {% for item in lists %}
+        <div class="container">
+            <h2><strong><a href="{% url 'komikrepo:viewList' id=item.id %}">{{ item.title }}</a></strong></h2>
+            <h6>Top {{ item.list_size }}</h6>
+            <p>{{ item.description }}</p>
+            <hr>
+        </div>
+
+        {% empty %}
+            <h3 class="listtopspace" align="center">No results for the query</h3>
+
+    {% endfor %}
+    </div>
+
+{% if lists.has_other_pages %}
+
+    <div class="container"  style="text-align:center;">
+        <div class="pagination">
+            {% if lists.has_previous %}
+              <a href="{% url 'komikrepo:listList' page=lists.previous_page_number %}?{{ request.GET.urlencode }}">&laquo;</a>
+            {% else %}
+              <a class="disabled">&laquo;</a>
+            {% endif %}
+            {% for i in lists.paginator.page_range %}
+              {% if lists.number == i %}
+                <a class="active">{{ i }} <a class="sr-only">(current)</a></a>
+              {% else %}
+                <a href="{% url 'komikrepo:listList' page=i %}?{{ request.GET.urlencode }}">{{ i }}</a>
+              {% endif %}
+            {% endfor %}
+            {% if lists.has_next %}
+              <a href="{% url 'komikrepo:listList' page=lists.next_page_number %}?{{ request.GET.urlencode }}">&raquo;</a>
+            {% else %}
+              <a class="disabled">&raquo;</a>
+            {% endif %}
+        </div>
+    </div>
+{% endif %}
+
+
+
+
+{% endblock %}
+{% block jscript %}
+<script>
+var link = document.location.href.split('&');
+
+if(link[0]){
+    link[0] = link[0].split('?')[1];
+}
+console.log(link)
+for(let i = 0; i < link.length; i++){
+    if (link[i].includes("search")) {
+        link[i] = link[i].replace("search=", "");
+        document.getElementById("search").value = link[i];
+    }
+}
+</script>
+{% endblock %}

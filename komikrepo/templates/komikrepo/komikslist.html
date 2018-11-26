@@ -53,7 +53,7 @@
 
             <div class="one column">
                 <div class="dropdown">
-                  <button class="dropbtn invisibutton"><i class="fa fa-sort" ></i></button>
+                  <button class="dropbtn invisibutton" disabled><i class="fa fa-sort" ></i></button>
                   <div class="dropdown-content">
                     <a href="?{% url_replace request 'sort' 'abc' %}">abc ↓</a>
                     <a href="?{% url_replace request 'sort' 'cba' %}">abc ↑</a>
@@ -77,65 +77,36 @@
     </div>
 
 
-
+    <div class="flex-container">
     {% for item in komiks %}
-        {% if forloop.counter0|divisibleby:2  %}
-        <div class="row">
-        <div class="six columns">
-            <div class="listtopspace">
-                <div class="row komik">
-                    <div class="five columns">
-                        <img src="{% static "" %}images/komikrepo/{{ item.image_url }}" alt="Avatar" style="width:100%">
-                    </div>
-                    <div class="seven columns">
-                        <div class="noverflow1">
-                            <h4><b><a href="{% url 'komikrepo:viewKomik' id=item.id %}">{{ item.title }}</a></b></h4>
-                            <h6>{{ item.author }}</h6>
-                          <p>{{ item.description }}</p>
-                          <h6>
-                          {% for tag in item.komik_tags.all %}
-                              {{ tag.name }}
-                          {% endfor %}
-                          </h6>
-                        </div>
-                    </div>
+
+
+            <div class="komik">
+                <div class="five columns">
+                    <img src="{% static "" %}images/komikrepo/{{ item.image_url }}" alt="Avatar" style="width:100%">
+                </div>
+                <div class="seven columns noverflow1">
+
+                        <h4><b><a href="{% url 'komikrepo:viewKomik' id=item.id %}">{{ item.title }}</a></b></h4>
+                        <h6>{{ item.author }}</h6>
+                      <p>{{ item.description }}</p>
+                      <h6>
+                      {% for tag in item.komik_tags.all %}
+                          {{ tag.name }}
+                      {% endfor %}
+                      </h6>
 
                 </div>
-            </div>
-        </div>
-        {% if forloop.last %}
-            </div>
-        {% endif %}
 
-        {% else %}
-        <div class="six columns">
-            <div class="listtopspace">
-                <div class="row komik">
-                    <div class="five columns">
-                        <img src="{% static "" %}images/komikrepo/{{ item.image_url }}" alt="Avatar" style="width:100%">
-                    </div>
-                    <div class="seven columns">
-                        <div class="noverflow1">
-                            <h4><b><a href="{% url 'komikrepo:viewKomik' id=item.id %}">{{ item.title }}</a></b></h4>
-                            <h6>{{ item.author }}</h6>
-                          <p>{{ item.description }}</p>
-                          <h6>
-                          {% for tag in item.komik_tags.all %}
-                              {{ tag.name }}
-                          {% endfor %}
-                          </h6>
-                        </div>
-                    </div>
-
-                </div>
             </div>
-        </div>
-        </div>
-        {% endif %}
+
+
+
         {% empty %}
-            <h3 class="listtopspace" align="center">No result for the query</h3>
+            <h3 class="listtopspace" align="center">No results for the query</h3>
 
     {% endfor %}
+    </div>
 
 {% if komiks.has_other_pages %}
 

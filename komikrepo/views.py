@@ -8,10 +8,13 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import Http404
 from django.db import connection
 from django.core.exceptions import PermissionDenied
+from django.db import IntegrityError
+import json
 
 
 def index(request):
-    context = {'hello': 'Test'}
+    komik = Komik.objects.all().order_by('-rating')[:5]
+    context = {'hello': 'Test', 'komiks': komik}
     return render(request, 'komikrepo/index.html', context)
 
 def signup(request):
@@ -35,7 +38,8 @@ def signup(request):
 
 def accountView(request, username):
     result = Account.objects.get(username=username)
-    context = {'account': result.username, 'description': result.description }
+    review = Review.objects.filter(user=result)
+    context = {'account': result.username, 'description': result.description, 'reviews' : review }
     return render(request, 'komikrepo/account.html', context)
 
 def deleteAccount(request, username):
@@ -79,11 +83,12 @@ def listKomiks(request, page=1):
         if request.GET:
             print(request.GET)
             if(request.GET.get('search')):
-                komik_list = Komik.objects.filter(title__icontains=request.GET.get('search'))
+                komik_list = Komik.objects.filter(title__icontains=request.GET.get('search')).order_by('-rating')
             else:
-                komik_list = Komik.objects.all()
+                komik_list = Komik.objects.all().order_by('-rating')
             for entry in request.GET:
                 print(entry)
+
                 if entry != 'search' and entry != 'sort':
                     komik_list = komik_list.filter(komik_tags=Tag.objects.filter(name=entry)[0])
                     print(komik_list)
@@ -94,13 +99,14 @@ def listKomiks(request, page=1):
                     elif order == 'cba':
                         komik_list = komik_list.order_by('-title')
                     elif order == 'rating':
-                        komik_list = komik_list.order_by('rating')
-                    elif order == 'gnitar':
+                        # default behavior
                         komik_list = komik_list.order_by('-rating')
+                    elif order == 'gnitar':
+                        komik_list = komik_list.order_by('rating')
 
 
         else:
-            komik_list = Komik.objects.all()
+            komik_list = Komik.objects.all().order_by('-rating')
 
         paginator = Paginator(komik_list, 10)
         print('page no is', page)
@@ -194,3 +200,229 @@ def deleteReviewKomik(request, id):
     else:
         return redirect('/komik/'+str(id))
     return redirect('/komik/'+str(id))
+
+def updateList(request, id):
+    if request.method == 'POST':
+        return redirect('/')
+    else:
+        if request.user.is_authenticated:
+            try:
+                user = Account.objects.get(username=request.user.username)
+                list = List.objects.get(id=id, user=user)
+            except List.DoesNotExist:
+                raise Http404("List does not exist!")
+        return render(request, 'komikrepo/list.html', {'id': list.id, 'title': list.title})
+    return render(request, 'komikrepo/list.html')
+
+def createList(request):
+    if request.method == 'POST':
+        form = ListCreateForm(request.POST)
+        print(form.is_valid())
+        if form.is_valid() and request.user.is_authenticated:
+            print('found one ' + str(form.cleaned_data.get('title')))
+            try:
+                user = Account.objects.get(username=request.user.username)
+                title = form.cleaned_data.get('title')
+                description = form.cleaned_data.get('description')
+
+                l = List(user=user, title=title, description=description, list_size=0)
+                l.save()
+                print('crea sted!')
+            except Account.DoesNotExist:
+                raise Http404("Account does not exist!")
+            return redirect('/list/edit/'+str(l.id))
+        else:
+            return redirect('/')
+
+    else:
+        form = ListCreateForm()
+        return render(request, 'komikrepo/createlist.html', {'form': form})
+    return render(request, 'komikrepo/list.html')
+
+def autocompleteModel(request):
+    if request.is_ajax():
+        q = request.GET.get('term', '')
+        komik_list = Komik.objects.filter(title__icontains=q).order_by('title')
+        results = []
+        print (q)
+        for r in komik_list:
+            temp = {}
+            temp['label'] = r.title
+            temp['value'] = r.id
+            results.append(temp)
+        data = json.dumps(results)
+        print(results)
+    else:
+        data = 'fail'
+    mimetype = 'application/json'
+    return HttpResponse(data, mimetype)
+
+
+def getList(request):
+    if request.user.is_authenticated and request.is_ajax():
+        user = Account.objects.get(username=request.user.username)
+        list = List.objects.get(user=user, id=request.GET.get('id', None))
+        results = []
+        sorted = ListRank.objects.filter(list=list).order_by('ranking')
+        print(sorted)
+
+        for item in sorted:
+            komik = item.komik
+            temp = {}
+            temp['label'] = komik.title
+            temp['value'] = komik.id
+            temp['img'] = komik.image_url
+            temp['desc'] = item.description
+            results.append(temp)
+
+        # for komik in list.list_komiks.all():
+        #     temp = {}
+        #     temp['label'] = komik.title
+        #     temp['value'] = komik.id
+        #     temp['img'] = komik.image_url
+        #     results.append(temp)
+
+
+        data = json.dumps(results)
+        print(results)
+    else:
+        data = 'fail'
+    return HttpResponse(data)
+
+
+def addToList(request):
+    print ('dafuq')
+    if request.user.is_authenticated and request.is_ajax():
+        print('pass')
+        try:
+            user = Account.objects.get(username=request.user.username)
+            list = List.objects.get(user=user, id=request.POST.get('id', None))
+            komik = Komik.objects.get(id=request.POST.get('komik_id', None))
+            listrank = ListRank(list=list, komik=komik,  ranking=request.POST.get('ranking', 1), description="test")
+            listrank.save()
+            data = {'label' : komik.title, 'value': komik.id, 'img': komik.image_url}
+            data = json.dumps(data);
+        except Account.DoesNotExist or List.DoesNotExist or Komik.DoesNotExist or IntegrityError:
+            data = {'result' : 'fail'}
+            data = json.dumps(data);
+    else:
+        data = {'result' : 'fail'}
+        data = json.dumps(data);
+    return HttpResponse(data)
+
+def deleteFromList(request):
+    print ('dafuq')
+    if request.user.is_authenticated and request.is_ajax():
+        print('pass')
+        try:
+            user = Account.objects.get(username=request.user.username)
+            list = List.objects.get(user=user, id=request.POST.get('id', None))
+            komik = Komik.objects.get(id=request.POST.get('komik_id', None))
+            listrank = ListRank.objects.get(komik=komik, list=list)
+            rank = listrank.ranking
+            listrank.delete()
+            offsetRanks = ListRank.objects.filter(list=list, ranking__gt=rank).order_by('ranking');
+            print(offsetRanks)
+            for komik in offsetRanks:
+                komik.ranking -= 1
+                komik.save()
+
+            data = {'result' : 'success'}
+            data = json.dumps(data);
+        except Account.DoesNotExist or List.DoesNotExist or Komik.DoesNotExist:
+            data = {'result' : 'fail'}
+            data = json.dumps(data);
+    else:
+        data = {'result' : 'fail'}
+        data = json.dumps(data);
+    return HttpResponse(data)
+
+def sortList(request):
+    if request.user.is_authenticated and request.is_ajax():
+        print('pass')
+        try:
+            user = Account.objects.get(username=request.user.username)
+            list = List.objects.get(user=user, id=request.POST.get('id', None))
+            sorted = json.loads(request.POST.get('komik_sort', None))
+            print(sorted)
+            for index, id in enumerate(sorted, start=1):
+                komik = Komik.objects.get(id=id)
+                listrank = ListRank.objects.get(komik=komik, list=list)
+                listrank1 = ListRank.objects.get(list=list, ranking=index)
+                temp = listrank.ranking
+                listrank.ranking *= -1
+                listrank.save()
+                listrank1.ranking = temp
+                listrank1.save()
+                listrank.ranking = index
+                listrank.save()
+
+            data = {'result' : 'success'}
+            data = json.dumps(data);
+        except Account.DoesNotExist or List.DoesNotExist or Komik.DoesNotExist or ListRank.DoesNotExist:
+            data = {'result' : 'fail'}
+            data = json.dumps(data);
+    else:
+        data = {'result' : 'fail'}
+        data = json.dumps(data);
+    return HttpResponse(data)
+
+def updateDesc(request):
+    print ('dafuq')
+    if request.user.is_authenticated and request.is_ajax():
+        print('pass')
+        try:
+            user = Account.objects.get(username=request.user.username)
+            list = List.objects.get(user=user, id=request.POST.get('id', None))
+            komik = Komik.objects.get(id=request.POST.get('komik_id', None))
+            listrank = ListRank.objects.get(komik=komik, list=list)
+            listrank.description = request.POST.get('description', '')
+            listrank.save()
+            data = {'result' : 'success'}
+            data = json.dumps(data);
+        except Account.DoesNotExist or List.DoesNotExist or Komik.DoesNotExist:
+            data = {'result' : 'fail'}
+            data = json.dumps(data);
+    else:
+        data = {'result' : 'fail'}
+        data = json.dumps(data);
+    return HttpResponse(data)
+
+
+
+def listList(request, page=1):
+    if request.method == 'GET':
+        if request.GET:
+            print(request.GET)
+            if(request.GET.get('search')):
+                list_list = List.objects.filter(title__icontains=request.GET.get('search')).order_by('title')
+            else:
+                list_list = List.objects.all().order_by('title')
+
+        else:
+            list_list = List.objects.all().order_by('title')
+
+        paginator = Paginator(list_list, 10)
+        print('page no is', page)
+        try:
+            lists = paginator.page(page)
+        except PageNotAnInteger:
+            lists = paginator.page(1)
+        except EmptyPage:
+            lists = paginator.page(paginator.num_pages)
+        context = {'hello': 'post'}
+    else:
+        komiks = Komik.objects.all()
+    return render(request, 'komikrepo/listlist.html', {'lists': lists, 'querySet': request.GET.urlencode()})
+
+def viewList(request, id):
+    try:
+        list = List.objects.get(id=id)
+        listrank = ListRank.objects.filter(list=list).order_by('ranking')
+    except List.DoesNotExist:
+        raise Http404("Komik does not exist")
+    if request.user.is_authenticated and request.user.username == list.user:
+        canAdd = True
+    else:
+        canAdd = False
+    return render(request, 'komikrepo/listview.html', {'list': list, 'listrank': listrank, 'canAdd': canAdd })

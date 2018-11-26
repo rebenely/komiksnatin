@@ -30,17 +30,6 @@ class Account(models.Model):
 
 
 
-
-class List(models.Model):
-    title = models.CharField(max_length=50, blank=True, null=True)
-    description = models.CharField(max_length=500, blank=True, null=True)
-    user = models.ForeignKey(Account, models.DO_NOTHING)
-    list_size = models.IntegerField()
-
-    class Meta:
-
-        db_table = 'list'
-
 class Tag(models.Model):
     name = models.CharField(unique=True, max_length=50)
     description = models.CharField(max_length=500, blank=True, null=True)
@@ -78,16 +67,7 @@ class Tags(models.Model):
         db_table = 'tags'
         unique_together = (('tag', 'komik'),)
 
-class ListRank(models.Model):
-    list = models.ForeignKey(List, models.DO_NOTHING)
-    komik = models.ForeignKey(Komik, models.DO_NOTHING)
-    ranking = models.IntegerField()
-    description = models.CharField(max_length=500, blank=True, null=True)
 
-    class Meta:
-
-        db_table = 'listrank'
-        unique_together = (('list', 'ranking'),)
 
 class Review(models.Model):
     user = models.ForeignKey(Account, models.DO_NOTHING)
@@ -99,3 +79,29 @@ class Review(models.Model):
 
         db_table = 'review'
         unique_together = (('komik', 'user'),)
+
+
+
+
+class List(models.Model):
+    title = models.CharField(max_length=50, blank=True, null=True)
+    description = models.CharField(max_length=500, blank=True, null=True)
+    user = models.ForeignKey(Account, models.DO_NOTHING)
+    list_size = models.IntegerField()
+    list_komiks = models.ManyToManyField(Komik, through='ListRank')
+
+    class Meta:
+
+        db_table = 'list'
+
+class ListRank(models.Model):
+    list = models.ForeignKey(List, models.DO_NOTHING)
+    komik = models.ForeignKey(Komik, models.DO_NOTHING)
+    ranking = models.IntegerField()
+    description = models.CharField(max_length=500, blank=True, null=True)
+
+    class Meta:
+
+        db_table = 'listrank'
+        unique_together = (('list', 'ranking'), ('list', 'komik'))
+        ordering =('ranking', )

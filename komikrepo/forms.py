@@ -79,3 +79,15 @@ class ReviewForm(forms.Form):
         print(comment)
         if rating < 0 or rating > 5:
             raise forms.ValidationError("Must be in the range 1-5!")
+
+class ListCreateForm(forms.Form):
+    title = forms.CharField(required=True, max_length=100);
+    description = forms.CharField(required=True, max_length=500);
+
+    class Meta:
+        fields = ('title', 'description')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        title = cleaned_data.get("title")
+        description = cleaned_data.get("description")

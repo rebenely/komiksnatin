@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Lists{% endblock %}
+{% block content %}
+{% load komikrepo_extras %}
+
+        <h1 align="center">{{ list.title }}<h1>
+        <h6 align="center">{{ list.description }}<h6>
+            <div class="container">
+    {% for item in listrank %}
+        <div class="row flex-komik-review u-max-full-width">
+            <div style="max-width: 100px;min-width: 70px;">
+                <img src="{% static "" %}images/komikrepo/{{ item.komik.image_url }}" alt="Avatar" style="width:100%">
+            </div>
+            <div class="u-max-full-width"">
+            <!-- <div> -->
+                <h4> <strong>{{ item.ranking }}</strong>: <a href="{% url 'komikrepo:viewKomik' id=item.komik.id %}"><em>{{ item.komik.title }}</em></a></h4>
+                <h6 style="white-space: pre-line">{{ item.description }}</h6>
+            </div>
+        </div>
+        <hr>
+
+        {% empty %}
+            <h3 class="listtopspace" align="center">No results for the query</h3>
+
+    {% endfor %}
+    </div>
+
+{% endblock %}
+{% block jscript %}
+
+{% endblock %}

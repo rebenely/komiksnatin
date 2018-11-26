@@ -1,0 +1,76 @@
+{% load static %}
+<div id="sortable" class="max-full-width">
+    {% for item in list.list_komiks.all %}
+
+      <div class="ui-state-default row">
+              <div class="three columns">
+                  <img src="{% static "" %}images/komikrepo/{{item.image_url}}" alt="Avatar" style="width:100%">
+              </div>
+              <div class="seven columns">
+
+                      <h4><b><a href="#">{{ item.title }}</a></b></h4>
+                      <h6>Comment</h6>
+                     <textarea class="u-full-width" placeholder="Comment" id="exampleMessage" style="height: 85px; width: 400px; resize: none;"></textarea>
+
+              </div>
+
+      </div>
+      {% empty %}
+        <h1 align="center">Empty List</h1>
+      {% endfor %}
+</div>
+<script>
+    store = []
+$( function() {
+  $( "#sortable" ).sortable({
+    placeholder: "ui-state-highlight"
+  });
+  $( "#sortable" ).disableSelection();
+} );
+
+$( function() {
+  function log( message ) {
+    $( "<div>" ).text( message ).prependTo( "#log" );
+    $( "#log" ).scrollTop( 0 );
+  }
+
+  $( "#birds" ).autocomplete({
+    source: function( request, response ) {
+      $.ajax( {
+        url: "/ajax/komik/",
+        dataType: "json",
+        data: {
+          term: request.term
+        },
+        success: function( data ) {
+          response( data );
+
+        }
+      } );
+    },
+    minLength: 2,
+    select: function( event, ui ) {
+      console.log(ui.item);
+      store.push(ui.item.value);
+      console.log(store);
+      $(this).val('');
+      event.preventDefault();
+      $.ajax( {
+        url: "/ajax/list/add/",
+        dataType: "json",
+        data: {
+          id: "{{ list.id }}",
+          komik_id: ui.item.value,
+          ranking: store.length + 1
+        },
+        success: function( data ) {
+          console.log('eto resulta', data)
+
+        }
+      } );
+    }
+  } );
+} );
+
+
+</script>

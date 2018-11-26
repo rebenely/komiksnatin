@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Create List{% endblock %}
+{% block content %}
+{% if user.is_authenticated %}
+
+    <h1 align="center"><strong>Create List</strong></h1>
+    <div class="container">
+
+        <form method="post">
+        {% csrf_token %}
+        <div class="row">
+            <div class="four columns">
+            <h5 align="center">Title</h5>
+            </div>
+            <div class="six columns">
+                <input class="u-full-width" type="text" placeholder="Title" id="title" name="title">
+            </div>
+        </div>
+        <div class="row">
+            <div class="four columns">
+            <h5 align="center">Description</h5>
+            </div>
+            <div class="six columns">
+                <textarea class="u-full-width" placeholder="Description" id="description" name="description"></textarea>
+            </div>
+        </div>
+        <hr>
+        <div class="row" style="text-align:center;">
+            <button class="button-primary" type="submit">Create</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="container">
+    {% if form.errors %}
+        {% for field, errors in form.errors.items %}
+            {% for error in errors %}
+                <p align="center">{{ error }}</p>
+            {% endfor %}
+        {% endfor %}
+    {% endif %}
+    </div>
+{% else %}
+
+    <h1 align="center">You must be logged in!</h1>
+
+{% endif %}
+{% endblock %}
