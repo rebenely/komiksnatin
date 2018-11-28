@@ -3,36 +3,66 @@
 {% block title %}Lists{% endblock %}
 {% block content %}
 {% load komikrepo_extras %}
-<div class="stickyfilter">
-    <div class="row container">
-        <form method="GET" action="{% url 'komikrepo:listList' %}" class="nospace">
+    <div class="stickyfilter">
+        <div class="row container">
+            <form method="GET" action="{% url 'komikrepo:listList' %}" class="nospace">
 
-        <div class="twelve columns">
+            <div class="eight columns">
 
-            <div class="search">
-              <span class="fa fa-search"></span>
-              <input class="u-full-width" placeholder="Keep empty for all" id="search" name="search">
+                <div class="search">
+                  <span class="fa fa-search"></span>
+                  <input class="u-full-width" placeholder="Keep empty for all" id="search" name="search">
+                </div>
+
+            </div>
+            <div class="three columns">
+                <a class="button button-primary" href="{% url 'komikrepo:createList'%}" style="float:right;margin-bottom: 0px">Create List</a>
             </div>
 
-        </div>
+            <div class="one column" style="overflow: visible;">
+                <div class="dropdown">
+                  <button class="dropbtn invisibutton" disabled><i class="fa fa-sort" ></i></button>
+                  <div class="dropdown-content">
+                      <a href="?{% url_replace request 'sort' 'abc' %}">abc ↓</a>
+                      <a href="?{% url_replace request 'sort' 'cba' %}">abc ↑</a>
+                      <a href="?{% url_replace request 'sort' 'new' %}">newest</a>
+                      <a href="?{% url_replace request 'sort' 'old' %}">oldest</a>
+                  </div>
+                </div>
+            </div>
 
-        </form>
+            </form>
+        </div>
     </div>
-</div>
 
-    <div class="flex-container">
+    <div class="" style="z-index: 0; margin: 10px;">
+        <div class="">
+
     {% for item in lists %}
-        <div class="container">
-            <h2><strong><a href="{% url 'komikrepo:viewList' id=item.id %}">{{ item.title }}</a></strong></h2>
-            <h6>Top {{ item.list_size }}</h6>
-            <p>{{ item.description }}</p>
+            <div class="row">
+                <div class="nine columns">
+                    <h2><strong><a href="{% url 'komikrepo:viewList' id=item.id %}">{{ item.title }}</a></strong></h2>
+                    <p style="margin-bottom: 20px;"><em>Top {{ item.list_size }}</em></p>
+                </div>
+                <div class="three columns">
+                    {% if user.username == item.user.username %}
+                    <a class="button" href="{% url 'komikrepo:updateList' id=item.id %}" style="margin-top: 10px; float:right;">Edit List</a>
+                    {% else %}
+                    <h6 style="margin-top: 10px; float:right;"><a href="{% url 'komikrepo:account' username=item.user.username %}">{{item.user.username}}</a></h6>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <p style="white-space: pre-line;margin-bottom: 10px;">{{ item.description }}</p>
+            </div>
             <hr>
-        </div>
 
         {% empty %}
             <h3 class="listtopspace" align="center">No results for the query</h3>
 
     {% endfor %}
+        </div>
+
     </div>
 
 {% if lists.has_other_pages %}

@@ -22,7 +22,27 @@
 
         {% endfor %}
         </div>
-
+        <h3>Random Featured List</h3>
+        <hr>
+        <div class="container">
+            <div class="row">
+                <div class="nine columns">
+                    <h2><strong><a href="{% url 'komikrepo:viewList' id=list.id %}">{{ list.title }}</a></strong></h2>
+                    <p style="margin-bottom: 20px;"><em>Top {{ list.list_size }}</em></p>
+                </div>
+                <div class="three columns">
+                    {% if user.username == list.user.username %}
+                    <a class="button" href="{% url 'komikrepo:updateList' id=list.id %}" style="margin-top: 10px; float:right;">Edit List</a>
+                    {% else %}
+                    <h6 style="margin-top: 10px; float:right;"><a href="{% url 'komikrepo:account' username=list.user.username %}">{{list.user.username}}</a></h6>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <p style="white-space: pre-line;margin-bottom: 10px;">{{ list.description }}</p>
+            </div>
+        </div>
+        <hr>
 
     {% else %}
     <div class="twelve columns">

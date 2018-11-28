@@ -4,8 +4,16 @@
 {% block content %}
 {% load komikrepo_extras %}
 
+        {% if user.is_authenticated %}
+            {% if user.username == list.user.username %}
+            <div>
+                <a class="button" href="{% url 'komikrepo:updateList' id=list.id %}" style="position: absolute; right: 0;">Edit List</a>
+            </div>
+            {% endif %}
+        {% endif %}
         <h1 align="center">{{ list.title }}<h1>
-        <h6 align="center">{{ list.description }}<h6>
+        <h6 align="center" style="white-space: pre-line;">{{ list.description }}<h6>
+
             <div class="container">
     {% for item in listrank %}
         <div class="row flex-komik-review u-max-full-width">
@@ -21,7 +29,7 @@
         <hr>
 
         {% empty %}
-            <h3 class="listtopspace" align="center">No results for the query</h3>
+            <h3 class="listtopspace" align="center">List is empty!</h3>
 
     {% endfor %}
     </div>

@@ -6,10 +6,37 @@
 
 <div class="row">
     {% if user.is_authenticated %}
-    <h1 align="center"><strong>{{ title }}</strong></h1>
+
+    <div id="myModal" class="modal">
+      <div class="modal-content">
+          <div class="modal-header">
+          <h5 align="center">Are you sure you want to delete list?</h5>
+          </div>
+          <form method="post" action="{% url 'komikrepo:deleteList' id=id %}">
+
+        <div class="container">
+        <div style="text-align:center;">
+                {% csrf_token %}
+                <div class="row">
+                </div>
+        </div>
+        </div>
+        <hr>
+        <div class="modal-footer"  style="text-align:center;">
+
+                <div class="row">
+                    <button class="button-primary  u-max-full-width" type="submit">Delete</button>
+                    <a align="center" class="button button u-max-full-width" id="close">No</a>
+                </div>
+            </div>
+            </form>
+
+      </div>
+    </div>
+
     <div class="eight columns" >
 
-        <div id="sortable" class="max-full-width">
+    <div id="sortable" class="max-full-width">
             <h1 align="center">Empty</h1>
       </div>
 
@@ -17,22 +44,34 @@
 
 
     <div class="three columns sticky">
+
+        <label>Title: </label>
+        <input class="u-full-width" type="text" placeholder="Title" id="titleBox" value="{{ title }}">
+        <label>Description: </label>
+        <textarea class="u-full-width" placeholder="Description:" id="descBox">{{ desc }}</textarea>
         <div class="ui-widget">
           <label for="komiksearch">Add Komik: </label>
           <input class="u-full-width" type="text" placeholder="search komik" id="komiksearch">
+        </div>
+
+        <div class="container" style="padding-top:10px;">
+            <a class="button button u-full-width" id="openModal">Delete</a>
         </div>
         <div id="loader">
             <div class="row">
                 <div class="eight columns" style="margin-top: 10px; padding-left: 20px; ">
                     Processing Request
                 </div>
-            <div class="lds-ring" style=""><div></div><div></div><div></div><div></div></div>
+                <div class="lds-ring" style=""><div></div><div></div><div></div><div></div></div>
             </div>
         <div>
         <div id="dialog" title="Error">
             <p id="dialogMessage">Test</p>
         </div>
+
+
     </div>
+
     {% else %}
     <h1 align="center">Login First!</h1>
     {% endif %}
@@ -121,45 +160,50 @@ $( function() {
       } );
     },
     minLength: 2,
+    focus: function(event, ui) {
+        event.preventDefault();
+        $("#komiksearch").val(ui.item.label);
+    },
     select: function( event, ui ) {
-      console.log(ui.item);
+        console.log(ui.item);
 
-      console.log(store);
-      $(this).val('');
-      event.preventDefault();
-      $("#loader").show();
-      $.ajax( {
-        url: "/ajax/list/add/",
-        type: "POST",
-        dataType: "json",
-        data: {
-          id: "{{ id }}",
-          komik_id: ui.item.value,
-          ranking: store.length + 1
+        console.log(store);
+        $(this).val('');
+        event.preventDefault();
+        $("#loader").show();
+
+        $.ajax( {
+            url: "/ajax/list/add/",
+            type: "POST",
+            dataType: "json",
+            data: {
+                id: "{{ id }}",
+                komik_id: ui.item.value,
+                ranking: store.length + 1
         },
         success: function( data ) {
-          console.log('eto resulta', data)
-          if(store.length == 0){
+            console.log('eto resulta', data)
+            if(store.length == 0){
               $( "#sortable" ).empty();
-          }
-          data.desc = '';
-          store.push(data);
-          appendKomik(data.label, data.img, data.value, data.desc);
-          $([document.documentElement, document.body]).animate({
+            }
+            data.desc = '';
+            store.push(data);
+            appendKomik(data.label, data.img, data.value, data.desc);
+            $([document.documentElement, document.body]).animate({
                 scrollTop: $(document).height()
-           }, 500);
-           $("#loader").hide();
-       },
-       statusCode: {
-       500: function() {
-          $( "#dialog" ).dialog( "open" );
-          $( "#dialogMessage" ).text("Error adding. Komik already in list!")
-          $("#loader").hide();
-       }
-     }
-      } );
-  },
-  } );
+            }, 500);
+            $("#loader").hide();
+        },
+        statusCode: {
+            500: function() {
+            $( "#dialog" ).dialog( "open" );
+            $( "#dialogMessage" ).text("Error adding. Komik already in list!")
+            $("#loader").hide();
+            }
+        }
+        } );
+        },
+    } );
 } );
 $(document).ready(function(){
     $( "#dialog" ).dialog({
@@ -193,17 +237,91 @@ function appendKomik(title, img, id, desc){
 
 }
 
+var timer1 = null;
+ $(document).on("keydown", "#titleBox", function(event){
+       clearTimeout(timer1);
+       timer1 = setTimeout(editTitle, 1000, event)
+});
+$(document).on("focusout", "#titleBox", function(event){
+      editTitle(event);
+});
+
+
+function editTitle(event) {
+    console.log('do stuff', event.currentTarget.id, 'value ', event.currentTarget.value);
+    var komik_id = getNumber(event.currentTarget.id)
+    $("#loader").show();
+    if(event.currentTarget.value != ''){
+        $.ajax( {
+          url: "/ajax/list/title/",
+          type: "POST",
+          dataType: "json",
+          data: {
+            id: "{{ id }}",
+            title: event.currentTarget.value
+          },
+          success: function( data ) {
+              $("#loader").hide();
+          }
+        } );
+    } else {
+        $( "#dialog" ).dialog( "open" );
+        $( "#dialogMessage" ).text("Title must not be empty!")
+        $("#loader").hide();
+    }
+}
+
+
+var timer2 = null;
+ $(document).on("keydown", "#descBox", function(event){
+       clearTimeout(timer2);
+       timer2 = setTimeout(editDesc, 1000, event)
+});
+$(document).on("focusout", "#descBox", function(event){
+      editDesc(event);
+});
+
+
+function editDesc(event) {
+    console.log('do stuff', event.currentTarget.id, 'value ', event.currentTarget.value);
+    var komik_id = getNumber(event.currentTarget.id)
+    $("#loader").show();
+
+    $.ajax( {
+      url: "/ajax/list/description/",
+      type: "POST",
+      dataType: "json",
+      data: {
+        id: "{{ id }}",
+        desc: event.currentTarget.value
+      },
+      success: function( data ) {
+          $("#loader").hide();
+      }
+    } );
+
+
+}
 
 var timer = null;
  $(document).on("keydown", "textarea", function(event){
-
-       clearTimeout(timer);
-       timer = setTimeout(doStuff, 1000, event)
+       if(event.currentTarget.id != "descBox"){
+           clearTimeout(timer);
+           timer = setTimeout(doStuff, 1000, event)
+       }
 });
+$(document).on("focusout", "textarea", function(event){
+    if(event.currentTarget.id != "descBox"){
+        doStuff(event)
+    }
+});
+
 
 function doStuff(event) {
     console.log('do stuff', event.currentTarget.id, 'value ', event.currentTarget.value);
     var komik_id = getNumber(event.currentTarget.id)
+    $("#loader").show();
+
     $.ajax( {
       url: "/ajax/list/desc/",
       type: "POST",
@@ -214,7 +332,7 @@ function doStuff(event) {
         description: event.currentTarget.value
       },
       success: function( data ) {
-
+          $("#loader").hide();
       }
     } );
 
@@ -258,6 +376,32 @@ $.ajaxSetup({
     }
 });
 
+
+var modal = document.getElementById('myModal');
+console.log('puta')
+// Get the button that opens the modal
+var btn = document.getElementById("openModal");
+
+// Get the <span> element that closes the modal
+var span = document.getElementById("close");
+
+// When the user clicks on the button, open the modal
+btn.onclick = function() {
+    console.log('yow');
+    modal.style.display = "block";
+}
+
+// When the user clicks on <span> (x), close the modal
+span.onclick = function() {
+    modal.style.display = "none";
+}
+
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function(event) {
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}
 
 </script>
 {% endblock %}

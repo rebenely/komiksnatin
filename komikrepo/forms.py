@@ -33,8 +33,8 @@ class EditForm(forms.Form):
     description = forms.CharField(required=False);
     username = forms.CharField(help_text='Say something about yourself!');
     oldpassword = forms.CharField(help_text='Say something about yourself!');
-    password1 = forms.CharField(help_text='Say something about yourself!');
-    password2 = forms.CharField(help_text='Say something about yourself!');
+    password1 = forms.CharField(help_text='Say something about yourself!', required=False);
+    password2 = forms.CharField(help_text='Say something about yourself!', required=False);
 
     class Meta:
         fields = ('username', 'description', 'oldpassword' ,'password1', 'password2', )
@@ -50,19 +50,28 @@ class EditForm(forms.Form):
             raise forms.ValidationError(
                 "Wrong password!"
             )
+        if new_password1 and new_password2:
+            if old_password == new_password1:
+                raise forms.ValidationError(
+                    "New password must not be old password!"
+                )
+            if new_password1 and len(new_password1) < 5:
+                raise forms.ValidationError(
+                    "Password must be at least 5 characters!"
+                )
+            if new_password1 and new_password2 and new_password2 != new_password1:
+                raise forms.ValidationError(
+                    "New password does not match!"
+                )
+        if new_password1 and not new_password2:
+            raise forms.ValidationError(
+                "Must retype new password!"
+            )
+        if new_password2 and not new_password1:
+            raise forms.ValidationError(
+                "Must retype new password!"
+            )
 
-        if old_password == new_password1:
-            raise forms.ValidationError(
-                "New password must not be old password!"
-            )
-        if new_password1 and len(new_password1) < 5:
-            raise forms.ValidationError(
-                "Password must be at least 5 characters!"
-            )
-        if new_password1 and new_password2 and new_password2 != new_password1:
-            raise forms.ValidationError(
-                "New password does not match!"
-            )
 
 class ReviewForm(forms.Form):
     comment = forms.CharField(required=False, max_length=500);

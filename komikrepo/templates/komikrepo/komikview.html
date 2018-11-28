@@ -86,8 +86,8 @@
         <hr>
         {% for review in reviews %}
             <div class="container">
-                <h4><em>{{ review.user.username }}</em> : <strong>{{ review.rating }}☆</strong></h4>
-                <p  style="white-space: pre-line">{{ review.comment }}</p>
+                <a href="{% url 'komikrepo:account' username=review.user.username %}"><h4><em>{{ review.user.username }}</em></a> : <strong>{{ review.rating }}☆</strong></h4>
+                <p style="white-space: pre-line">{{ review.comment }}</p>
             </div>
             <hr>
         {% endfor %}

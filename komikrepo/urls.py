@@ -26,12 +26,12 @@ urlpatterns = [
     path('review/edit/<int:id>/', komik_views.editReviewKomik, name='editReviewKomik'),
     path('review/delete/<int:id>/', komik_views.deleteReviewKomik, name='deleteReviewKomik'),
 
+
     path('list/edit/<int:id>', komik_views.updateList, name='updateList'),
     path('list/create/', komik_views.createList, name='createList'),
-    path('list/', komik_views.listList, name='listList'),
+    path('list/delete/<int:id>', komik_views.deleteList, name='deleteList'),
     path('list/<int:id>', komik_views.viewList, name='viewList'),
-
-
+    path('list/', komik_views.listList, name='listList'),
 
 
     url(r'^ajax/komik/$', komik_views.autocompleteModel, name="komikSearchAjax"),
@@ -40,6 +40,8 @@ urlpatterns = [
     url(r'^ajax/list/delete/$', komik_views.deleteFromList, name="deleteListAjax"),
     url(r'^ajax/list/sort/$', komik_views.sortList, name="sortListAjax"),
     url(r'^ajax/list/desc/$', komik_views.updateDesc, name="ListRankDescAjax"),
+    url(r'^ajax/list/title/$', komik_views.updateTitle, name="updateTitle"),
+    url(r'^ajax/list/description/$', komik_views.updateListDesc, name="updateListDescAjax"),
 
 
 

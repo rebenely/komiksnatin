@@ -840,6 +840,7 @@ img{
 .dropdown {
     position: relative;
     display: inline-block;
+    z-index: 2;
 }
 
 .dropdown-content {
@@ -849,7 +850,7 @@ img{
     background-color: #f9f9f9;
     min-width: 100px;
     box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-    z-index: 1;
+    z-index: 2;
 }
 
 .dropdown-content a {
@@ -858,6 +859,7 @@ img{
     text-decoration: none;
     display: block;
     text-align: center;
+    z-index: 2;
 }
 
 .dropdown-content a:hover {background-color: lightblue}
@@ -877,6 +879,7 @@ img{
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
+  z-index: 1;
 }
 
 .flex-komik-review {

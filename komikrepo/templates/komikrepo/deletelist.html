@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}List Delete{% endblock %}
+{% block content %}
+{% if success %}
+    <h1 align="center">List deleted!</h1>
+{% else %}
+<h1 align="center">Request Failed {{ success }}</h1>
+{% endif %}
+
+{% endblock %}

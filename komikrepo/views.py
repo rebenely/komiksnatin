@@ -9,12 +9,18 @@ from django.http import Http404
 from django.db import connection
 from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError
+from random import randint
 import json
 
 
 def index(request):
-    komik = Komik.objects.all().order_by('-rating')[:5]
-    context = {'hello': 'Test', 'komiks': komik}
+    komik = Komik.objects.all().order_by('-rating', 'title')[:5]
+
+    num = List.objects.all().count()
+    num = randint(0, num - 1)
+    print(num)
+    randomList = List.objects.all()[num]
+    context = {'hello': 'Test', 'komiks': komik, 'list': randomList}
     return render(request, 'komikrepo/index.html', context)
 
 def signup(request):
@@ -39,7 +45,8 @@ def signup(request):
 def accountView(request, username):
     result = Account.objects.get(username=username)
     review = Review.objects.filter(user=result)
-    context = {'account': result.username, 'description': result.description, 'reviews' : review }
+    list = List.objects.filter(user=result)
+    context = {'account': result.username, 'description': result.description, 'reviews' : review, 'list': list }
     return render(request, 'komikrepo/account.html', context)
 
 def deleteAccount(request, username):
@@ -66,10 +73,11 @@ def editAccount(request, username):
                 user = User.objects.get(username=username)
                 user.account.description = form.cleaned_data.get('description')
                 user.account.account_type = 'basic';
-                raw_password = form.cleaned_data.get('password1')
-                user.set_password(raw_password)
-                print('password ',raw_password )
-                login(request, user)
+                if form.cleaned_data.get('password'):
+                    raw_password = form.cleaned_data.get('password1')
+                    user.set_password(raw_password)
+                    print('password ',raw_password )
+                    login(request, user)
                 user.save()
                 return redirect('/account/'+username)
     else:
@@ -211,7 +219,7 @@ def updateList(request, id):
                 list = List.objects.get(id=id, user=user)
             except List.DoesNotExist:
                 raise Http404("List does not exist!")
-        return render(request, 'komikrepo/list.html', {'id': list.id, 'title': list.title})
+        return render(request, 'komikrepo/list.html', {'id': list.id, 'title': list.title, 'desc': list.description})
     return render(request, 'komikrepo/list.html')
 
 def createList(request):
@@ -232,12 +240,33 @@ def createList(request):
                 raise Http404("Account does not exist!")
             return redirect('/list/edit/'+str(l.id))
         else:
-            return redirect('/')
-
+            return render(request, 'komikrepo/createlist.html', {'form': form})
     else:
         form = ListCreateForm()
         return render(request, 'komikrepo/createlist.html', {'form': form})
     return render(request, 'komikrepo/list.html')
+
+
+def deleteList(request, id):
+    if request.method == 'POST':
+        if request.user.is_authenticated and id:
+            print('wewuu')
+            try:
+                user = Account.objects.get(username=request.user.username)
+                list = List.objects.get(id=id, user=user)
+                print(list)
+                list.delete()
+                success = True
+                print('list deleted')
+            except List.DoesNotExist or Account.DoesNotExist:
+                raise Http404("Error retreiving from DB")
+                success = False
+    else:
+        success = False
+    print(success)
+    return render(request, 'komikrepo/deletelist.html', {'success': success})
+
+
 
 def autocompleteModel(request):
     if request.is_ajax():
@@ -298,7 +327,7 @@ def addToList(request):
             user = Account.objects.get(username=request.user.username)
             list = List.objects.get(user=user, id=request.POST.get('id', None))
             komik = Komik.objects.get(id=request.POST.get('komik_id', None))
-            listrank = ListRank(list=list, komik=komik,  ranking=request.POST.get('ranking', 1), description="test")
+            listrank = ListRank(list=list, komik=komik,  ranking=request.POST.get('ranking', 1), description="")
             listrank.save()
             data = {'label' : komik.title, 'value': komik.id, 'img': komik.image_url}
             data = json.dumps(data);
@@ -388,7 +417,43 @@ def updateDesc(request):
         data = json.dumps(data);
     return HttpResponse(data)
 
+def updateTitle(request):
+    print ('dafuq')
+    if request.user.is_authenticated and request.is_ajax():
+        print('pass')
+        try:
+            user = Account.objects.get(username=request.user.username)
+            list = List.objects.get(user=user, id=request.POST.get('id', None))
+            list.title = request.POST.get('title', None)
+            list.save()
+            data = {'result' : 'success'}
+            data = json.dumps(data);
+        except Account.DoesNotExist or List.DoesNotExist or Komik.DoesNotExist:
+            data = {'result' : 'fail'}
+            data = json.dumps(data);
+    else:
+        data = {'result' : 'fail'}
+        data = json.dumps(data);
+    return HttpResponse(data)
 
+def updateListDesc(request):
+    print ('dafuq')
+    if request.user.is_authenticated and request.is_ajax():
+        print('pass')
+        try:
+            user = Account.objects.get(username=request.user.username)
+            list = List.objects.get(user=user, id=request.POST.get('id', None))
+            list.description = request.POST.get('desc', None)
+            list.save()
+            data = {'result' : 'success'}
+            data = json.dumps(data);
+        except Account.DoesNotExist or List.DoesNotExist or Komik.DoesNotExist:
+            data = {'result' : 'fail'}
+            data = json.dumps(data);
+    else:
+        data = {'result' : 'fail'}
+        data = json.dumps(data);
+    return HttpResponse(data)
 
 def listList(request, page=1):
     if request.method == 'GET':
@@ -398,6 +463,18 @@ def listList(request, page=1):
                 list_list = List.objects.filter(title__icontains=request.GET.get('search')).order_by('title')
             else:
                 list_list = List.objects.all().order_by('title')
+
+            if(request.GET.get('sort')):
+                order = request.GET.get('sort', '')
+                if order == 'abc':
+                    list_list = list_list.order_by('title')
+                elif order == 'cba':
+                    print('print descending')
+                    list_list = list_list.order_by('-title')
+                elif order == 'new':
+                    list_list = list_list.order_by('title')
+                elif order == 'old':
+                    list_list = list_list.order_by('-title')
 
         else:
             list_list = List.objects.all().order_by('title')

@@ -75,6 +75,30 @@
             <hr>
         {% endfor %}
 
+        <h5>Lists by user</h5>
+        <hr>
+        {% for item  in list %}
+        <div class="container">
+            <div class="row">
+                <div class="nine columns">
+                    <h4><strong><a href="{% url 'komikrepo:viewList' id=item.id %}">{{ item.title }}</a></strong></h4>
+                    <p style="margin-bottom: 20px;"><em>Top {{ item.list_size }}</em></p>
+                </div>
+                <div class="three columns">
+                    {% if user.username == item.user.username %}
+                    <a class="button" href="{% url 'komikrepo:updateList' id=item.id %}" style="margin-top: 10px; float:right;">Edit List</a>
+                    {% else %}
+                    <h6 style="margin-top: 10px; float:right;"><a href="{% url 'komikrepo:account' username=item.user.username %}">{{item.user.username}}</a></h6>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <p style="white-space: pre-line;margin-bottom: 10px;font-size: 9px;">{{ item.description }}</p>
+            </div>
+            <hr>
+        </div>
+        {% endfor %}
+
     </div>
 </div>
 {% else %}
