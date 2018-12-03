@@ -14,11 +14,16 @@ import json
 
 
 def index(request):
+    # select * from komik order by rating desc, title asc limit 5;
     komik = Komik.objects.all().order_by('-rating', 'title')[:5]
 
+    # select count(*) from list;
     num = List.objects.all().count()
     num = randint(0, num - 1)
     print(num)
+
+    # this is equivalent to getting one row only but i did not use id=num because the num may be offset by previous ids
+    # select * from list order by random() limit 1; I was told this was slow.
     randomList = List.objects.all()[num]
     context = {'hello': 'Test', 'komiks': komik, 'list': randomList}
     return render(request, 'komikrepo/index.html', context)
@@ -31,10 +36,14 @@ def signup(request):
             user.refresh_from_db()  # load the profile instance created by the signal
             user.account.description = form.cleaned_data.get('description')
             user.account.account_type = 'basic';
+
+            # insert into auth_user (username, password) values (form.username, form.password);
+            # this also triggers a django action which will create a profile (Account) row for this user
+            # insert into account (username, description, accountType) values (form.username, form.description, 'basic');
             user.save()
-            print (connection.queries)
 
             raw_password = form.cleaned_data.get('password1')
+            # log user in
             user = authenticate(username=user.username, password=raw_password)
             login(request, user)
             return redirect('/')
@@ -43,9 +52,12 @@ def signup(request):
     return render(request, 'registration/signup.html', {'form': form})
 
 def accountView(request, username):
+    # select * from account where username=username;
     result = Account.objects.get(username=username)
-    review = Review.objects.filter(user=result)
-    list = List.objects.filter(user=result)
+    # select * from review where user=result order by rating desc;
+    review = Review.objects.filter(user=result).order_by('-rating')
+    # select * from list where user=result order by created desc;
+    list = List.objects.filter(user=result).order_by('-created')
     context = {'account': result.username, 'description': result.description, 'reviews' : review, 'list': list }
     return render(request, 'komikrepo/account.html', context)
 
@@ -56,6 +68,8 @@ def deleteAccount(request, username):
         if request.user.is_authenticated and request.user.username == username and request.POST['password']:
             u = authenticate(username=username, password=request.POST['password'])
             if u:
+                # delete from auth_user where username=username;
+                # delete cascades
                 u.delete()
                 deleted = True
                 logout(request)
@@ -79,6 +93,8 @@ def editAccount(request, username):
                     print('password ',raw_password )
                     login(request, user)
                 user.save()
+                # update auth_user set password=hashed(raw_password) where username=username;
+                # update account set description=form.description where username=username;
                 return redirect('/account/'+username)
     else:
         form = EditForm()
@@ -89,14 +105,15 @@ def editAccount(request, username):
 def listKomiks(request, page=1):
     if request.method == 'GET':
         if request.GET:
-            print(request.GET)
             if(request.GET.get('search')):
+                # select * from komik where title like '%form.search%' order by rating desc;
                 komik_list = Komik.objects.filter(title__icontains=request.GET.get('search')).order_by('-rating')
             else:
+                # select * from komik order by rating desc;
                 komik_list = Komik.objects.all().order_by('-rating')
             for entry in request.GET:
-                print(entry)
 
+                # these change the order but does not query the database anymore
                 if entry != 'search' and entry != 'sort':
                     komik_list = komik_list.filter(komik_tags=Tag.objects.filter(name=entry)[0])
                     print(komik_list)
@@ -114,6 +131,7 @@ def listKomiks(request, page=1):
 
 
         else:
+            # select * from komik order by rating desc;
             komik_list = Komik.objects.all().order_by('-rating')
 
         paginator = Paginator(komik_list, 10)
@@ -131,8 +149,11 @@ def listKomiks(request, page=1):
 
 def viewKomik(request, id):
     try:
+        # select * from komik where id=id;
         komik = Komik.objects.get(id=id)
-        reviews = Review.objects.filter(komik=komik)
+        # select * from review order by rating desc;
+        reviews = Review.objects.filter(komik=komik).order_by('-rating')
+        # select * from account where username=request.user.username
         user = Account.objects.get(username=request.user.username)
         try:
             reviews.get(user=user)
@@ -152,11 +173,15 @@ def reviewKomik(request, id):
         if form.is_valid() and request.user.is_authenticated:
             print('found one ' + str(form.cleaned_data.get('rating')))
             try:
+                # select * from komik where id=id;
                 komik = Komik.objects.get(id=id)
+                # select * from account where username=request.user.username
                 user = Account.objects.get(username=request.user.username)
+
                 rating = form.cleaned_data.get('rating')
                 comment = form.cleaned_data.get('comment')
                 r = Review(user=user, komik=komik, rating=rating, comment=comment)
+                # insert into review (rating, comment, komik_id, user_id) values (rating, comment, komik.id, comment);
                 r.save()
                 print(komik)
             except Komik.DoesNotExist:
@@ -172,8 +197,12 @@ def editReviewKomik(request, id):
         if form.is_valid() and request.user.is_authenticated:
             print('found one ' + str(form.cleaned_data.get('rating')))
             try:
+                # select * from komik where id=id;
                 komik = Komik.objects.get(id=id)
+                # select * from account where username=request.user.username
                 user = Account.objects.get(username=request.user.username)
+
+                # select * from review where komik=komik, user=user
                 old_review = Review.objects.get(komik=komik, user=user)
 
                 rating = form.cleaned_data.get('rating')
@@ -186,8 +215,11 @@ def editReviewKomik(request, id):
     else:
         form = ReviewForm()
         try:
+            # select * from komik where id=id;
             komik = Komik.objects.get(id=id)
+            # select * from account where username=request.user.username
             user = Account.objects.get(username=request.user.username)
+            # select * from review where komik=komik, user=user
             review = Review.objects.get(komik=komik, user=user)
         except Komik.DoesNotExist or Account.DoesNotExist or Review.DoesNotExist:
             raise Http404("Error retreiving from DB")
@@ -199,9 +231,13 @@ def deleteReviewKomik(request, id):
     if request.method == 'POST':
         if request.user.is_authenticated:
             try:
+                # select * from komik where id=id;
                 komik = Komik.objects.get(id=id)
+                # select * from account where username=request.user.username
                 user = Account.objects.get(username=request.user.username)
+                # select * from review where komik=komik, user=user
                 old_review = Review.objects.get(komik=komik, user=user)
+                # delete from review where id=old_review.id;
                 old_review.delete()
             except Komik.DoesNotExist or Account.DoesNotExist or Review.DoesNotExist:
                 raise Http404("Error retreiving from DB")
@@ -215,7 +251,9 @@ def updateList(request, id):
     else:
         if request.user.is_authenticated:
             try:
+                # select * from account where username=request.user.username
                 user = Account.objects.get(username=request.user.username)
+                # select * from list where id=id, user=user.username
                 list = List.objects.get(id=id, user=user)
             except List.DoesNotExist:
                 raise Http404("List does not exist!")
@@ -229,13 +267,15 @@ def createList(request):
         if form.is_valid() and request.user.is_authenticated:
             print('found one ' + str(form.cleaned_data.get('title')))
             try:
+                # select * from account where username=request.user.username
                 user = Account.objects.get(username=request.user.username)
                 title = form.cleaned_data.get('title')
                 description = form.cleaned_data.get('description')
 
                 l = List(user=user, title=title, description=description, list_size=0)
+                # insert into list (title, description, list_size, user_id) values (title,description, 0, user.username);
                 l.save()
-                print('crea sted!')
+
             except Account.DoesNotExist:
                 raise Http404("Account does not exist!")
             return redirect('/list/edit/'+str(l.id))
@@ -250,11 +290,11 @@ def createList(request):
 def deleteList(request, id):
     if request.method == 'POST':
         if request.user.is_authenticated and id:
-            print('wewuu')
             try:
+                # select * from account where username=request.user.username;
                 user = Account.objects.get(username=request.user.username)
                 list = List.objects.get(id=id, user=user)
-                print(list)
+                # delete from list where id=list.id, user=list.user;
                 list.delete()
                 success = True
                 print('list deleted')
@@ -271,6 +311,7 @@ def deleteList(request, id):
 def autocompleteModel(request):
     if request.is_ajax():
         q = request.GET.get('term', '')
+        # select * from komik where title like q order by title;
         komik_list = Komik.objects.filter(title__icontains=q).order_by('title')
         results = []
         print (q)
@@ -289,9 +330,12 @@ def autocompleteModel(request):
 
 def getList(request):
     if request.user.is_authenticated and request.is_ajax():
+        # select * from account where username=request.user.username;
         user = Account.objects.get(username=request.user.username)
+        # select * from list where user=user.username, id=request.id;
         list = List.objects.get(user=user, id=request.GET.get('id', None))
         results = []
+        # select * from listrank where list=list.id order by ranking;
         sorted = ListRank.objects.filter(list=list).order_by('ranking')
         print(sorted)
 
@@ -324,10 +368,14 @@ def addToList(request):
     if request.user.is_authenticated and request.is_ajax():
         print('pass')
         try:
+            # select * from account where username=request.user.username;
             user = Account.objects.get(username=request.user.username)
+            # select * from list where user=user.id, id=request.id;
             list = List.objects.get(user=user, id=request.POST.get('id', None))
+            # select * from komik where id=request.komik_id;
             komik = Komik.objects.get(id=request.POST.get('komik_id', None))
             listrank = ListRank(list=list, komik=komik,  ranking=request.POST.get('ranking', 1), description="")
+            # insert into listrank (ranking, description, komik_id, list_id) values (form.ranking, '', komik.id, list.id);
             listrank.save()
             data = {'label' : komik.title, 'value': komik.id, 'img': komik.image_url}
             data = json.dumps(data);
@@ -344,11 +392,16 @@ def deleteFromList(request):
     if request.user.is_authenticated and request.is_ajax():
         print('pass')
         try:
+            # select * from account where username=request.user.username;
             user = Account.objects.get(username=request.user.username)
+            # select * from list where user=user.id, id=request.id;
             list = List.objects.get(user=user, id=request.POST.get('id', None))
+            # select * from komik where id=request.komik_id;
             komik = Komik.objects.get(id=request.POST.get('komik_id', None))
+            # select * from listrank where komik=komik.id, list=list.id;
             listrank = ListRank.objects.get(komik=komik, list=list)
             rank = listrank.ranking
+            # delete from listrank where id=listrank.id;
             listrank.delete()
             offsetRanks = ListRank.objects.filter(list=list, ranking__gt=rank).order_by('ranking');
             print(offsetRanks)
@@ -370,11 +423,16 @@ def sortList(request):
     if request.user.is_authenticated and request.is_ajax():
         print('pass')
         try:
+            # select * from account where username=request.user.username;
             user = Account.objects.get(username=request.user.username)
+            # select * from list where user=user.id, id=request.id;
             list = List.objects.get(user=user, id=request.POST.get('id', None))
             sorted = json.loads(request.POST.get('komik_sort', None))
             print(sorted)
             for index, id in enumerate(sorted, start=1):
+                # switches ranking of listrank records (lr1, lr2)
+                # update listrank set ranking=lr2.ranking where id=lr1.id;
+                # update listrank set ranking=lr1.ranking where id=lr2.id;
                 komik = Komik.objects.get(id=id)
                 listrank = ListRank.objects.get(komik=komik, list=list)
                 listrank1 = ListRank.objects.get(list=list, ranking=index)
@@ -401,11 +459,16 @@ def updateDesc(request):
     if request.user.is_authenticated and request.is_ajax():
         print('pass')
         try:
+            # select * from account where username=request.user.username;
             user = Account.objects.get(username=request.user.username)
+            # select * from list where user=user.id, id=request.id;
             list = List.objects.get(user=user, id=request.POST.get('id', None))
+            # select * from komik where id=request.komik_id;
             komik = Komik.objects.get(id=request.POST.get('komik_id', None))
+            # select * from listrank where komik_id=komik.id, list_id=list.id;
             listrank = ListRank.objects.get(komik=komik, list=list)
             listrank.description = request.POST.get('description', '')
+            # update listrank set description=request.description where id=listrank.id;
             listrank.save()
             data = {'result' : 'success'}
             data = json.dumps(data);
@@ -422,9 +485,13 @@ def updateTitle(request):
     if request.user.is_authenticated and request.is_ajax():
         print('pass')
         try:
+            # select * from account where username=request.user.username;
             user = Account.objects.get(username=request.user.username)
+            # select * from list where user=user.id, id=request.id;
             list = List.objects.get(user=user, id=request.POST.get('id', None))
+            # select * from komik where id=request.komik_id;
             list.title = request.POST.get('title', None)
+            # update list set title=request.title where id=list.id;
             list.save()
             data = {'result' : 'success'}
             data = json.dumps(data);
@@ -441,9 +508,13 @@ def updateListDesc(request):
     if request.user.is_authenticated and request.is_ajax():
         print('pass')
         try:
+            # select * from account where username=request.user.username;
             user = Account.objects.get(username=request.user.username)
+            # select * from list where user=user.id, id=request.id;
             list = List.objects.get(user=user, id=request.POST.get('id', None))
+            # select * from komik where id=request.komik_id;
             list.description = request.POST.get('desc', None)
+            # update list set description=request.description where id=list.id;
             list.save()
             data = {'result' : 'success'}
             data = json.dumps(data);
@@ -460,11 +531,14 @@ def listList(request, page=1):
         if request.GET:
             print(request.GET)
             if(request.GET.get('search')):
+                # select * from list where title like '%form.search%' order by title asc;
                 list_list = List.objects.filter(title__icontains=request.GET.get('search')).order_by('title')
             else:
+                # select * from list order by title asc;
                 list_list = List.objects.all().order_by('title')
 
             if(request.GET.get('sort')):
+                # this does not query the DB anymore
                 order = request.GET.get('sort', '')
                 if order == 'abc':
                     list_list = list_list.order_by('title')
@@ -472,11 +546,12 @@ def listList(request, page=1):
                     print('print descending')
                     list_list = list_list.order_by('-title')
                 elif order == 'new':
-                    list_list = list_list.order_by('title')
+                    list_list = list_list.order_by('-created')
                 elif order == 'old':
-                    list_list = list_list.order_by('-title')
+                    list_list = list_list.order_by('created')
 
         else:
+            # select * from list order by title asc;
             list_list = List.objects.all().order_by('title')
 
         paginator = Paginator(list_list, 10)
@@ -494,7 +569,9 @@ def listList(request, page=1):
 
 def viewList(request, id):
     try:
+        # select * from list where id=request.id;
         list = List.objects.get(id=id)
+        # select * from listrank where list=list.id order by ranking asc;
         listrank = ListRank.objects.filter(list=list).order_by('ranking')
     except List.DoesNotExist:
         raise Http404("Komik does not exist")

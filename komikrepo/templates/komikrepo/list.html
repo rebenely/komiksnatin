@@ -56,6 +56,7 @@
 
         <div class="container" style="padding-top:10px;">
             <a class="button button u-full-width" id="openModal">Delete</a>
+            <a class="button button-primary u-full-width" href="{% url 'komikrepo:viewList' id=id %}">View</a>
         </div>
         <div id="loader">
             <div class="row">
@@ -204,6 +205,8 @@ $( function() {
         } );
         },
     } );
+
+
 } );
 $(document).ready(function(){
     $( "#dialog" ).dialog({
@@ -242,9 +245,9 @@ var timer1 = null;
        clearTimeout(timer1);
        timer1 = setTimeout(editTitle, 1000, event)
 });
-$(document).on("focusout", "#titleBox", function(event){
-      editTitle(event);
-});
+// $(document).on("focusout", "#titleBox", function(event){
+//       editTitle(event);
+// });
 
 
 function editTitle(event) {
@@ -277,9 +280,9 @@ var timer2 = null;
        clearTimeout(timer2);
        timer2 = setTimeout(editDesc, 1000, event)
 });
-$(document).on("focusout", "#descBox", function(event){
-      editDesc(event);
-});
+// $(document).on("focusout", "#descBox", function(event){
+//       editDesc(event);
+// });
 
 
 function editDesc(event) {
@@ -299,8 +302,6 @@ function editDesc(event) {
           $("#loader").hide();
       }
     } );
-
-
 }
 
 var timer = null;
@@ -310,11 +311,11 @@ var timer = null;
            timer = setTimeout(doStuff, 1000, event)
        }
 });
-$(document).on("focusout", "textarea", function(event){
-    if(event.currentTarget.id != "descBox"){
-        doStuff(event)
-    }
-});
+// $(document).on("focusout", "textarea", function(event){
+//     if(event.currentTarget.id != "descBox"){
+//         doStuff(event)
+//     }
+// });
 
 
 function doStuff(event) {
