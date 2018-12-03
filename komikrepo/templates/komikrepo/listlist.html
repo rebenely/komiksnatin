@@ -11,7 +11,7 @@
 
                 <div class="search">
                   <span class="fa fa-search"></span>
-                  <input class="u-full-width" placeholder="Keep empty for all" id="search" name="search">
+                  <input class="u-full-width" placeholder="Keep empty for all" id="search" name="search" >
                 </div>
 
             </div>
@@ -96,6 +96,18 @@
 {% endblock %}
 {% block jscript %}
 <script>
+    $(document).ready(function(){
+        console.log('print');
+        $('#search').keydown(function(event) {
+          // enter has keyCode = 13, change it if you want to use another button
+          if (event.keyCode == 13) {
+              console.log('enter')
+            this.form.submit();
+            return false;
+          }
+        });
+    });
+    
 var link = document.location.href.split('&');
 
 if(link[0]){

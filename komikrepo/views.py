@@ -87,7 +87,7 @@ def editAccount(request, username):
                 user = User.objects.get(username=username)
                 user.account.description = form.cleaned_data.get('description')
                 user.account.account_type = 'basic';
-                if form.cleaned_data.get('password'):
+                if form.cleaned_data.get('password1'):
                     raw_password = form.cleaned_data.get('password1')
                     user.set_password(raw_password)
                     print('password ',raw_password )
